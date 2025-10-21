@@ -1,0 +1,26 @@
+I want to make a library that helps with numeric input. The business logic should be extracted to a core to allow integration using react or other libraries' internal mechanisms. But by default it should provide an attach method to attach event handlers to an input elements with the type "number" or a node list containing such elements. Start by creating tests for all the functionality in the features below:
+
+  - The following new attributes:
+  	- valid-increment: defaults to 0, meaning all numbers can be entered. Otherwise only values that satisfy the formula value = min+x(increment) where x is a positive integer are valid  
+  	- key-increment: how much the up and down keys change the value, must be a multiple of valid-increment unless valid-increment is 0
+  	- integer: boolean attribute, when included valid-increment is rounded to the closest integer above 1
+  	- sign: possible values are "negative", "positive" and "any", defaults to any
+  	- show-plus: boolean attribute, when included show + sign for positive numbers
+  	- min: minimum value
+  	- max: maximum value
+  	- base: default 10, possible values are the integers between 2 and 36
+  	- radix: same as base, providing both shows an error in the console, but radix overrides base
+  	- letter-case: "upper" or "lower", defaults to "upper"  
+  	- separators: the character or system used to separate the digits, possible values are any single character (",", ".", "_", etc...), "indian", and locale. Defaults to locale
+  	- decimal: the character used to separate the decimal part, defaults to "locale" which will determine this based on locale
+  	- prefix: a fixed string to show between the sign and the number
+	- postfix: a fixed string to show after the number 
+  	- locale: any valid Int.Locale value, used to determine the output. Digit input should be possible in the selected locale as well as standard western number keys. Defaults to the locale on the closest container or system locale. 
+  - Keystrokes that would make the input invalid should be ignored. This includes a key that would make the number exceed max or go below min. A sign without a number is, however, considered valid.
+  - If the sign attribute is "any" pressing "-" flips the sign, "+" makes it positive. All possible dashes and negative signs should be accepted. 
+  - If the sign attribute is negative the negative sign should always be shown, even if there is no other input.
+  - Pressing up or down should increase or decrease the number by the key-increment
+  - Display base 2-10 numbers based on the "locale" attribute
+  - Display base 11 and higher using english numbers and letters
+
+Please also create an easy to use demonstration of all the possible values and a way to run the tests from the demo page
