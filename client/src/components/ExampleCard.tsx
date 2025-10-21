@@ -56,11 +56,12 @@ export function ExampleCard({ example, showCode = true, scriptLoaded = false }: 
           </h4>
           <div className="space-y-2">
             <input
-              type="number"
+              type="text"
               id={`demo-${example.id}`}
               className="w-full h-10 px-3 rounded-md border border-input bg-background font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Try typing here..."
               data-testid={`input-demo-${example.id}`}
+              inputMode="numeric"
             />
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Current value:</span>
