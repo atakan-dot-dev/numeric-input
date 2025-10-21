@@ -365,10 +365,17 @@
 
       if (parsed !== '') {
         if (this.isValidValue(parsed, config)) {
-          // Value is valid, reformat
-          const formatted = this.formatValue(parsed, config);
-          if (formatted !== value) {
-            element.value = formatted;
+          // For type="number" inputs, only set the numeric value (no formatting)
+          // For type="text" inputs, apply full formatting
+          let newValue;
+          if (element.type === 'number') {
+            newValue = String(parsed);
+          } else {
+            newValue = this.formatValue(parsed, config);
+          }
+          
+          if (newValue !== value) {
+            element.value = newValue;
             // Try to restore cursor position
             try {
               element.setSelectionRange(cursorPos, cursorPos);
@@ -476,8 +483,11 @@
       const selectionStart = element.selectionStart || 0;
       const selectionEnd = element.selectionEnd || 0;
 
-      // Get decimal separator
+      // Get separators
       const decimalSep = config.decimal === 'locale' ? this.getDecimalSeparator(config.locale) : config.decimal;
+      const groupSep = config.separators === 'locale' 
+        ? this.getGroupSeparator(config.locale)
+        : (config.separators === 'indian' || config.separators === 'none' || config.separators === '' ? ',' : config.separators);
 
       // Build allowed characters based on base
       let allowedChars = '0123456789';
@@ -491,7 +501,12 @@
         return true;
       }
 
-      // Allow decimal point if not integer mode and not already present
+      // Allow group separators (thousands separators) in all modes, including integer
+      if (config.separators !== 'none' && config.separators !== '' && key === groupSep) {
+        return true;
+      }
+
+      // Allow decimal separator ONLY if not in integer mode and not already present
       if (!config.integer && key === decimalSep) {
         // Check if decimal already exists in unselected portion
         const beforeSelection = value.substring(0, selectionStart);
