@@ -1,0 +1,288 @@
+import { useEffect, useState } from 'react';
+import { CodeBlock } from '@/components/CodeBlock';
+import { ExampleCard } from '@/components/ExampleCard';
+import { AttributeCard } from '@/components/AttributeCard';
+import { TestRunner } from '@/components/TestRunner';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { examples } from '@/data/examples';
+import {
+  validationAttributes,
+  formattingAttributes,
+  displayAttributes,
+  localeAttributes,
+} from '@/data/attributes';
+import { testSuites as initialTestSuites } from '@/data/tests';
+import { Terminal, Zap, Shield, Globe } from 'lucide-react';
+import { loadNumericInputScript } from '@/hooks/useNumericInput';
+import { useTestRunner } from '@/hooks/useTestRunner';
+
+export default function Home() {
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const { runTests, isRunning } = useTestRunner();
+
+  useEffect(() => {
+    loadNumericInputScript()
+      .then(() => setScriptLoaded(true))
+      .catch(error => console.error('Failed to load NumericInput script:', error));
+  }, []);
+  const installCode = `npm install numeric-input
+# or
+yarn add numeric-input
+# or
+pnpm add numeric-input`;
+
+  const quickStartCode = `import NumericInput from 'numeric-input';
+
+// Attach to a single input
+const input = document.querySelector('input[type="number"]');
+NumericInput.attach(input);
+
+// Or attach to multiple inputs
+const inputs = document.querySelectorAll('.numeric-input');
+NumericInput.attach(inputs);`;
+
+  const apiCode = `// Attach to element(s)
+NumericInput.attach(element);
+NumericInput.attach(nodeList);
+
+// Detach from element(s)
+NumericInput.detach(element);
+NumericInput.detach(nodeList);
+
+// Core methods (for framework integration)
+NumericInput.parseConfig(element);
+NumericInput.validateKeystroke(event, config);
+NumericInput.formatValue(value, config);
+NumericInput.handleArrowKey(direction, currentValue, config);`;
+
+  return (
+    <div className="space-y-16 pb-16">
+      {/* Hero Section */}
+      <section id="getting-started" className="space-y-6 pt-8">
+        <div className="space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight">NumericInput.js</h1>
+          <p className="text-xl text-muted-foreground max-w-3xl leading-relaxed">
+            A powerful, framework-agnostic JavaScript library for advanced numeric input handling. 
+            Support for multiple number bases, locale-aware formatting, intelligent validation, 
+            and comprehensive keyboard interactions.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Badge className="text-sm px-3 py-1">Framework Agnostic</Badge>
+            <Badge className="text-sm px-3 py-1">TypeScript Support</Badge>
+            <Badge className="text-sm px-3 py-1">Zero Dependencies</Badge>
+            <Badge className="text-sm px-3 py-1">2KB Gzipped</Badge>
+          </div>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+          <Card>
+            <CardHeader className="space-y-2">
+              <Terminal className="w-8 h-8 text-primary" />
+              <CardTitle className="text-base">Multi-Base Support</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Binary, octal, decimal, hexadecimal, and any base from 2 to 36
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="space-y-2">
+              <Globe className="w-8 h-8 text-primary" />
+              <CardTitle className="text-base">Locale Aware</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Automatic formatting based on locale with custom separator support
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="space-y-2">
+              <Shield className="w-8 h-8 text-primary" />
+              <CardTitle className="text-base">Smart Validation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Prevent invalid keystrokes, enforce ranges, and validate increments
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="space-y-2">
+              <Zap className="w-8 h-8 text-primary" />
+              <CardTitle className="text-base">Easy Integration</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Simple attach/detach API with React, Vue, and Svelte wrappers
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Installation */}
+        <div className="space-y-3 mt-8">
+          <h2 className="text-2xl font-semibold">Installation</h2>
+          <CodeBlock code={installCode} language="bash" />
+        </div>
+
+        {/* Quick Start */}
+        <div className="space-y-3 mt-8">
+          <h2 className="text-2xl font-semibold">Quick Start</h2>
+          <CodeBlock code={quickStartCode} language="javascript" />
+        </div>
+      </section>
+
+      {/* Attributes Reference */}
+      <section id="attributes" className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold">Attributes Reference</h2>
+          <p className="text-muted-foreground">
+            Comprehensive list of all supported attributes for customizing numeric input behavior.
+          </p>
+        </div>
+
+        <Tabs defaultValue="validation" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+            <TabsTrigger value="validation" data-testid="tab-validation">Validation</TabsTrigger>
+            <TabsTrigger value="formatting" data-testid="tab-formatting">Formatting</TabsTrigger>
+            <TabsTrigger value="display" data-testid="tab-display">Display</TabsTrigger>
+            <TabsTrigger value="locale" data-testid="tab-locale">Locale</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="validation" id="attr-validation" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              {validationAttributes.map((attr) => (
+                <AttributeCard key={attr.name} attribute={attr} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="formatting" id="attr-formatting" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              {formattingAttributes.map((attr) => (
+                <AttributeCard key={attr.name} attribute={attr} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="display" id="attr-display" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              {displayAttributes.map((attr) => (
+                <AttributeCard key={attr.name} attribute={attr} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="locale" id="attr-locale" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              {localeAttributes.map((attr) => (
+                <AttributeCard key={attr.name} attribute={attr} />
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </section>
+
+      {/* Examples */}
+      <section id="examples" className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold">Examples</h2>
+          <p className="text-muted-foreground">
+            Interactive examples demonstrating various configurations and use cases.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {examples.map((example) => (
+            <ExampleCard key={example.id} example={example} scriptLoaded={scriptLoaded} />
+          ))}
+        </div>
+      </section>
+
+      {/* Tests */}
+      <section id="tests" className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold">Test Suite</h2>
+          <p className="text-muted-foreground">
+            Comprehensive test coverage for all library features. Run tests to validate functionality.
+          </p>
+        </div>
+
+        {scriptLoaded ? (
+          <TestRunner suites={initialTestSuites} onRunTests={runTests} isRunning={isRunning} />
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">Loading test suite...</p>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      {/* API Reference */}
+      <section id="api" className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold">API Reference</h2>
+          <p className="text-muted-foreground">
+            Core API methods for integrating NumericInput with any framework or vanilla JavaScript.
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Core Methods</CardTitle>
+            <CardDescription>
+              Public API for attaching, detaching, and integrating with custom frameworks
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CodeBlock code={apiCode} language="javascript" />
+          </CardContent>
+        </Card>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-mono">attach(element)</CardTitle>
+              <CardDescription>Attach library to element(s)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-sm">
+                <strong>Parameters:</strong> <code className="text-xs bg-muted px-1 py-0.5 rounded">element</code> - HTMLElement or NodeList
+              </p>
+              <p className="text-sm">
+                <strong>Returns:</strong> void
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Attaches event handlers and initializes the library on the target input element(s).
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-mono">detach(element)</CardTitle>
+              <CardDescription>Remove library from element(s)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-sm">
+                <strong>Parameters:</strong> <code className="text-xs bg-muted px-1 py-0.5 rounded">element</code> - HTMLElement or NodeList
+              </p>
+              <p className="text-sm">
+                <strong>Returns:</strong> void
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Removes event handlers and cleans up the library from the target element(s).
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    </div>
+  );
+}
