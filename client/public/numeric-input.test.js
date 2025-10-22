@@ -4,12 +4,9 @@
  */
 
 // Simple test framework
-// Reset TestRunner if it exists (for hot reload)
-if (typeof window !== 'undefined' && window.TestRunner) {
-  window.TestRunner.reset();
-}
-
-const TestRunner = window.TestRunner || {
+// Use existing TestRunner or create new one
+if (typeof window !== 'undefined' && !window.TestRunner) {
+  window.TestRunner = {
   tests: [],
   suites: {},
   currentSuite: null,
@@ -68,7 +65,13 @@ const TestRunner = window.TestRunner || {
     this.suites = {};
     this.currentSuite = null;
   },
-};
+  };
+} else if (typeof window !== 'undefined' && window.TestRunner) {
+  // Reset existing TestRunner on hot reload
+  window.TestRunner.reset();
+}
+
+const TestRunner = window.TestRunner;
 
 // Assertion helpers
 function assert(condition, message) {

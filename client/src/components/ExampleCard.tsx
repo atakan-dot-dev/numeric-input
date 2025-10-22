@@ -16,6 +16,14 @@ export function ExampleCard({ example, showCode = true, scriptLoaded = false }: 
   
   useNumericInput(`demo-${example.id}`, example.config, scriptLoaded);
 
+  // Use type="text" for inputs with formatting (prefix, postfix, separators, or base != 10)
+  const needsTextInput = !!(
+    example.config.prefix || 
+    example.config.postfix || 
+    (example.config.separators && example.config.separators !== 'none') ||
+    (example.config.base && example.config.base !== 10)
+  );
+
   useEffect(() => {
     const input = document.getElementById(`demo-${example.id}`) as HTMLInputElement;
     if (!input) return;
@@ -56,11 +64,12 @@ export function ExampleCard({ example, showCode = true, scriptLoaded = false }: 
           </h4>
           <div className="space-y-2">
             <input
-              type="number"
+              type={needsTextInput ? "text" : "number"}
               id={`demo-${example.id}`}
               className="w-full h-10 px-3 rounded-md border border-input bg-background font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Try typing here..."
               data-testid={`input-demo-${example.id}`}
+              inputMode="numeric"
             />
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Current value:</span>

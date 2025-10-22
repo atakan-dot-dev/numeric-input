@@ -361,41 +361,39 @@
       const parsed = this.parseValue(value, config);
 
       // Store cursor position
-      const cursorPos = element.selectionStart;
+      const cursorPos = element.selectionStart || 0;
 
       if (parsed !== '') {
         if (this.isValidValue(parsed, config)) {
-          // For type="number" inputs, only set the numeric value (no formatting)
-          // For type="text" inputs, apply full formatting
-          let newValue;
-          if (element.type === 'number') {
-            newValue = String(parsed);
-          } else {
-            newValue = this.formatValue(parsed, config);
-          }
-          
-          if (newValue !== value) {
-            element.value = newValue;
-            // Try to restore cursor position
-            try {
-              element.setSelectionRange(cursorPos, cursorPos);
-            } catch (e) {
-              // Ignore errors when element is no longer usable
+          // Apply formatting for type="text" inputs
+          if (element.type === 'text') {
+            const formatted = this.formatValue(parsed, config);
+            if (formatted !== value) {
+              const lengthDiff = formatted.length - value.length;
+              element.value = formatted;
+              // Adjust cursor position based on length change
+              const newCursorPos = Math.max(0, Math.min(formatted.length, cursorPos + lengthDiff));
+              try {
+                element.setSelectionRange(newCursorPos, newCursorPos);
+              } catch (e) {
+                // Ignore errors
+              }
             }
           }
         } else {
-          // Value is invalid, prevent change
+          // Invalid value - revert to last valid value
           const oldValue = element.getAttribute('data-old-value') || '';
           element.value = oldValue;
           try {
-            element.setSelectionRange(cursorPos - 1, cursorPos - 1);
+            const newPos = Math.max(0, cursorPos - 1);
+            element.setSelectionRange(newPos, newPos);
           } catch (e) {
-            // Ignore errors when element is no longer usable
+            // Ignore errors
           }
         }
       }
 
-      // Store current value as old value
+      // Store current value
       element.setAttribute('data-old-value', element.value);
     },
 
