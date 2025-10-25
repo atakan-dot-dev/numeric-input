@@ -184,14 +184,26 @@ useEffect(() => {
 - **Event Optimized**: Efficient keystroke filtering
 
 ## Recent Changes
-- **Sign Flipping Fix (Latest)**: Minus key now properly blocked when `sign='positive'` or `min > 0`, preventing invalid negative values from being entered or flipped
+- **Configurable Examples (Latest)**: Added dynamic min/max controls on currency and percentage examples for testing edge cases and negative value validation
+  - ConfigurableExampleCard component with live min/max adjustment controls
+  - Detach/reattach mechanism to apply configuration changes instantly
+  - Dynamic code snippets reflecting current settings
+- **New Examples**: Expanded from 12 to 20 examples including:
+  - Negative numbers only (sign="negative")
+  - Temperature range with both positive and negative values
+  - Scientific precision (0.01 increments)
+  - Price with decimal places
+  - Base 36 (maximum alphanumeric base)
+  - European format (comma decimal)
+  - Any sign (unrestricted)
+- **Test Synchronization**: Fixed tests.ts to match actual test file (32 tests total)
+- **Sign Flipping Fix**: Minus key now properly blocked when `sign='positive'` or `min > 0`, preventing invalid negative values from being entered or flipped
 - Input type handling: Dynamically use `type="text"` for formatted inputs (prefix/postfix/separators/base≠10), `type="number"` for simple numeric inputs
 - Keystroke validation: Properly blocks decimal points in integer mode while allowing group separators
 - Cursor position management: Improved handling when formatting is applied during typing
-- Test suite expansion: Added 5 new test cases for sign flipping behavior (38 total tests)
-- Initial implementation of core library
-- Comprehensive test suite with 30+ tests
-- Full demo application with 12+ examples
+- Test suite expansion: Added 5 new test cases for sign flipping behavior
+- Initial implementation of core library with 32 comprehensive tests
+- Full demo application with 20 interactive examples
 - Dark/light theme support
 - Integrated test runner UI
 
