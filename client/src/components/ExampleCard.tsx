@@ -25,18 +25,23 @@ export function ExampleCard({ example, showCode = true, scriptLoaded = false }: 
   );
 
   useEffect(() => {
-    const input = document.getElementById(`demo-${example.id}`) as HTMLInputElement;
-    if (!input) return;
+    // The original input is hidden and has "-numeric" suffix
+    const originalInput = document.getElementById(`demo-${example.id}-numeric`) as HTMLInputElement;
+    if (!originalInput) return;
 
     const handleInput = () => {
-      // Display the parsed numeric value, not the raw input
-      const numericValue = input.getAttribute('data-numeric-value');
-      setCurrentValue(numericValue || '--');
+      // Display the numeric value from the hidden original input
+      setCurrentValue(originalInput.value || '--');
     };
 
-    input.addEventListener('input', handleInput);
-    return () => input.removeEventListener('input', handleInput);
-  }, [example.id]);
+    // Listen to the original input for value changes
+    originalInput.addEventListener('input', handleInput);
+    
+    // Also set initial value
+    handleInput();
+    
+    return () => originalInput.removeEventListener('input', handleInput);
+  }, [example.id, scriptLoaded]);
 
   return (
     <Card data-testid={`card-example-${example.id}`}>

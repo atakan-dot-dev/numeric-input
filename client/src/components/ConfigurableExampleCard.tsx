@@ -97,15 +97,26 @@ export function ConfigurableExampleCard({ example, showCode = true, scriptLoaded
     (window as any).NumericInput.detach(input);
     (window as any).NumericInput.attach(input);
 
+    // After attach, the original input is hidden with "-numeric" suffix
+    const originalInput = document.getElementById(`demo-${example.id}-numeric`) as HTMLInputElement;
+    
     const handleInput = () => {
-      // Display the parsed numeric value, not the raw input
-      const numericValue = input.getAttribute('data-numeric-value');
-      setCurrentValue(numericValue || '--');
+      // Display the numeric value from the hidden original input
+      if (originalInput) {
+        setCurrentValue(originalInput.value || '--');
+      }
     };
 
-    input.addEventListener('input', handleInput);
+    // Listen to the original (hidden) input for value changes
+    if (originalInput) {
+      originalInput.addEventListener('input', handleInput);
+      handleInput(); // Set initial value
+    }
+    
     return () => {
-      input.removeEventListener('input', handleInput);
+      if (originalInput) {
+        originalInput.removeEventListener('input', handleInput);
+      }
       if ((window as any).NumericInput) {
         (window as any).NumericInput.detach(input);
       }
