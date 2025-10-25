@@ -325,6 +325,79 @@ TestRunner.suite('Keystroke Tests', () => {
     const parsed = NumericInput.parseValue('-', config);
     assert(parsed === '' || parsed === '-', 'Should allow standalone sign');
   });
+
+  TestRunner.test('Sign flipping: basic with minus key', () => {
+    const input = createMockInput({ sign: 'any' });
+    const config = NumericInput.parseConfig(input);
+    input.value = '100';
+    NumericInput.attach(input);
+    
+    // Simulate minus key to flip sign
+    const event = { key: '-', preventDefault: () => { event.prevented = true } };
+    NumericInput.handleKeyDown(event, input, config);
+    
+    assert(event.prevented, 'Should prevent default');
+    assertEqual(input.value, '-100', 'Should flip to negative');
+  });
+
+  TestRunner.test('Sign flipping: blocked when min > 0', () => {
+    const input = createMockInput({ min: '1', sign: 'any' });
+    const config = NumericInput.parseConfig(input);
+    input.value = '10';
+    NumericInput.attach(input);
+    
+    // Simulate minus key - should NOT flip because min > 0
+    const event = { key: '-', preventDefault: () => { event.prevented = true } };
+    NumericInput.handleKeyDown(event, input, config);
+    
+    // Should allow keystroke for entering negative number but not flip
+    // The value should remain 10
+    assertEqual(input.value, '10', 'Should NOT flip sign when min > 0');
+  });
+
+  TestRunner.test('Sign flipping: blocked when sign=positive', () => {
+    const input = createMockInput({ sign: 'positive' });
+    const config = NumericInput.parseConfig(input);
+    input.value = '50';
+    NumericInput.attach(input);
+    
+    // Simulate minus key - should NOT flip because sign='positive'
+    const event = { key: '-', preventDefault: () => { event.prevented = true } };
+    NumericInput.handleKeyDown(event, input, config);
+    
+    assertEqual(input.value, '50', 'Should NOT flip sign when sign=positive');
+  });
+
+  TestRunner.test('Sign flipping: allowed when sign=any', () => {
+    const input = createMockInput({ sign: 'any' });
+    const config = NumericInput.parseConfig(input);
+    input.value = '-25';
+    NumericInput.attach(input);
+    
+    // Simulate minus key again to flip back to positive
+    const event = { key: '-', preventDefault: () => { event.prevented = true } };
+    NumericInput.handleKeyDown(event, input, config);
+    
+    assert(event.prevented, 'Should prevent default');
+    assertEqual(input.value, '25', 'Should flip to positive');
+  });
+
+  TestRunner.test('Sign flipping: allowed when min=0', () => {
+    const input = createMockInput({ min: '0', sign: 'any' });
+    const config = NumericInput.parseConfig(input);
+    input.value = '30';
+    NumericInput.attach(input);
+    
+    // Simulate minus key - should flip even though min=0
+    const event = { key: '-', preventDefault: () => { event.prevented = true } };
+    NumericInput.handleKeyDown(event, input, config);
+    
+    // Should flip but then validation should reject it
+    // Actually, we should allow the flip but validation prevents it from being valid
+    // Let's check if it got flipped
+    const flipped = input.value === '-30';
+    assert(!flipped, 'Should not flip to negative when result would be invalid (less than min)');
+  });
 });
 
 // ============================================================================

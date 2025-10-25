@@ -324,26 +324,40 @@
         return;
       }
 
-      // Handle sign flipping
-      if ((key === '-' || key === '−' || key === '–' || key === '—') && config.sign === 'any') {
-        if (currentValue !== '' && currentValue !== 0) {
+      // Handle sign flipping with minus key
+      // Flip sign for all inputs EXCEPT when min > 0 or sign='positive'
+      if (key === '-' || key === '−' || key === '–' || key === '—') {
+        const canFlipSign = config.sign !== 'positive' && !(config.min !== undefined && config.min > 0);
+        
+        if (canFlipSign && currentValue !== '' && currentValue !== 0) {
           event.preventDefault();
           const newValue = -currentValue;
-          const formatted = this.formatValue(newValue, config);
-          element.value = formatted;
-          element.dispatchEvent(new Event('input', { bubbles: true }));
-          return;
+          
+          // Only flip if the new value is valid
+          if (this.isValidValue(newValue, config)) {
+            const formatted = this.formatValue(newValue, config);
+            element.value = formatted;
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+          }
         }
       }
 
-      if (key === '+' && config.sign === 'any') {
-        if (currentValue !== '' && currentValue < 0) {
+      // Handle sign flipping with plus key
+      if (key === '+') {
+        const canFlipSign = config.sign !== 'negative' && !(config.max !== undefined && config.max < 0);
+        
+        if (canFlipSign && currentValue !== '' && currentValue < 0) {
           event.preventDefault();
           const newValue = Math.abs(currentValue);
-          const formatted = this.formatValue(newValue, config);
-          element.value = formatted;
-          element.dispatchEvent(new Event('input', { bubbles: true }));
-          return;
+          
+          // Only flip if the new value is valid
+          if (this.isValidValue(newValue, config)) {
+            const formatted = this.formatValue(newValue, config);
+            element.value = formatted;
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+          }
         }
       }
     },
@@ -514,7 +528,11 @@
       }
 
       // Allow minus sign for negative numbers
-      if ((key === '-' || key === '−') && config.sign !== 'positive') {
+      // Block if sign='positive' OR if min > 0 (which prevents negative values)
+      if (key === '-' || key === '−') {
+        if (config.sign === 'positive' || (config.min !== undefined && config.min > 0)) {
+          return false;
+        }
         // Only allow at the beginning
         return selectionStart === 0;
       }
