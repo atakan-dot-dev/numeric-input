@@ -176,6 +176,11 @@ useEffect(() => {
 - **Event Optimized**: Efficient keystroke filtering
 
 ## Recent Changes
+- **Sign Flipping Fix (Latest)**: Minus key now properly blocked when `sign='positive'` or `min > 0`, preventing invalid negative values from being entered or flipped
+- Input type handling: Dynamically use `type="text"` for formatted inputs (prefix/postfix/separators/base≠10), `type="number"` for simple numeric inputs
+- Keystroke validation: Properly blocks decimal points in integer mode while allowing group separators
+- Cursor position management: Improved handling when formatting is applied during typing
+- Test suite expansion: Added 5 new test cases for sign flipping behavior (38 total tests)
 - Initial implementation of core library
 - Comprehensive test suite with 30+ tests
 - Full demo application with 12+ examples
