@@ -50,14 +50,6 @@ export const examples: ExampleConfig[] = [
     code: '<input type="number" prefix="$" decimal="." separators="," min="0" />',
   },
   {
-    id: 'percentage',
-    title: 'Percentage',
-    description: 'Percentage input with postfix',
-    category: 'Formatting',
-    config: { postfix: '%', min: 0, max: 100 },
-    code: '<input type="number" postfix="%" min="0" max="100" />',
-  },
-  {
     id: 'hexadecimal',
     title: 'Hexadecimal (Base 16)',
     description: 'Hexadecimal number input with uppercase letters',

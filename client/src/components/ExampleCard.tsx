@@ -29,7 +29,9 @@ export function ExampleCard({ example, showCode = true, scriptLoaded = false }: 
     if (!input) return;
 
     const handleInput = () => {
-      setCurrentValue(input.value || '--');
+      // Display the parsed numeric value, not the raw input
+      const numericValue = input.getAttribute('data-numeric-value');
+      setCurrentValue(numericValue || '--');
     };
 
     input.addEventListener('input', handleInput);

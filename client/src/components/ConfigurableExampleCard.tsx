@@ -14,18 +14,47 @@ interface ConfigurableExampleCardProps {
 
 export function ConfigurableExampleCard({ example, showCode = true, scriptLoaded = false }: ConfigurableExampleCardProps) {
   const [currentValue, setCurrentValue] = useState('--');
-  const [min, setMin] = useState(example.config.min ?? -1000);
-  const [max, setMax] = useState(example.config.max ?? 1000);
+  const [htmlCode, setHtmlCode] = useState(example.code);
   const [config, setConfig] = useState(example.config);
 
-  // Update config when min/max changes
+  // Parse HTML code to extract config when code changes
   useEffect(() => {
-    setConfig({
-      ...example.config,
-      min,
-      max,
-    });
-  }, [min, max, example.config]);
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlCode, 'text/html');
+      const inputElement = doc.querySelector('input');
+      
+      if (inputElement) {
+        const newConfig: any = {};
+        
+        // Parse all possible attributes
+        const attrs = ['prefix', 'postfix', 'separators', 'decimal', 'min', 'max', 
+                      'valid-increment', 'key-increment', 'base', 'letter-case', 
+                      'sign', 'locale'];
+        
+        attrs.forEach(attr => {
+          const value = inputElement.getAttribute(attr);
+          if (value !== null) {
+            const camelAttr = attr.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+            // Convert numeric attributes
+            if (['min', 'max', 'validIncrement', 'keyIncrement', 'base'].includes(camelAttr)) {
+              newConfig[camelAttr] = parseFloat(value);
+            } else {
+              newConfig[camelAttr] = value;
+            }
+          }
+        });
+        
+        // Check for boolean attributes
+        if (inputElement.hasAttribute('integer')) newConfig.integer = true;
+        if (inputElement.hasAttribute('show-plus')) newConfig.showPlus = true;
+        
+        setConfig(newConfig);
+      }
+    } catch (e) {
+      console.error('Failed to parse HTML:', e);
+    }
+  }, [htmlCode]);
 
   // Use type="text" for inputs with formatting
   const needsTextInput = !!(
@@ -39,6 +68,16 @@ export function ConfigurableExampleCard({ example, showCode = true, scriptLoaded
     const input = document.getElementById(`demo-${example.id}`) as HTMLInputElement;
     if (!input || !scriptLoaded || !(window as any).NumericInput) return;
 
+    // First, clear all NumericInput-related attributes
+    const allPossibleAttrs = [
+      'prefix', 'postfix', 'separators', 'decimal', 'min', 'max',
+      'valid-increment', 'key-increment', 'base', 'radix', 'letter-case',
+      'sign', 'locale', 'integer', 'show-plus'
+    ];
+    allPossibleAttrs.forEach(attr => {
+      input.removeAttribute(attr);
+    });
+    
     // Apply all config attributes to the element
     Object.entries(config).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -59,7 +98,9 @@ export function ConfigurableExampleCard({ example, showCode = true, scriptLoaded
     (window as any).NumericInput.attach(input);
 
     const handleInput = () => {
-      setCurrentValue(input.value || '--');
+      // Display the parsed numeric value, not the raw input
+      const numericValue = input.getAttribute('data-numeric-value');
+      setCurrentValue(numericValue || '--');
     };
 
     input.addEventListener('input', handleInput);
@@ -70,19 +111,6 @@ export function ConfigurableExampleCard({ example, showCode = true, scriptLoaded
       }
     };
   }, [example.id, config, scriptLoaded]);
-
-  // Generate dynamic code
-  const generateCode = () => {
-    const attrs: string[] = [];
-    if (config.prefix) attrs.push(`prefix="${config.prefix}"`);
-    if (config.postfix) attrs.push(`postfix="${config.postfix}"`);
-    if (config.separators) attrs.push(`separators="${config.separators}"`);
-    if (config.decimal) attrs.push(`decimal="${config.decimal}"`);
-    if (min !== undefined) attrs.push(`min="${min}"`);
-    if (max !== undefined) attrs.push(`max="${max}"`);
-    const inputType = needsTextInput ? 'text' : 'number';
-    return `<input type="${inputType}" ${attrs.join(' ')} />`;
-  };
 
   return (
     <Card data-testid={`card-example-${example.id}`}>
@@ -100,46 +128,25 @@ export function ConfigurableExampleCard({ example, showCode = true, scriptLoaded
       <CardContent className="space-y-4">
         <div>
           <h4 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide">
-            Configuration Controls
+            Edit Configuration
           </h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor={`min-${example.id}`} className="text-xs">
-                Minimum
-              </Label>
-              <Input
-                id={`min-${example.id}`}
-                type="number"
-                value={min}
-                onChange={(e) => setMin(Number(e.target.value))}
-                className="h-8 text-sm"
-                data-testid={`input-min-${example.id}`}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`max-${example.id}`} className="text-xs">
-                Maximum
-              </Label>
-              <Input
-                id={`max-${example.id}`}
-                type="number"
-                value={max}
-                onChange={(e) => setMax(Number(e.target.value))}
-                className="h-8 text-sm"
-                data-testid={`input-max-${example.id}`}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor={`code-${example.id}`} className="text-xs">
+              HTML Code
+            </Label>
+            <textarea
+              id={`code-${example.id}`}
+              value={htmlCode}
+              onChange={(e) => setHtmlCode(e.target.value)}
+              className="w-full h-20 px-3 py-2 rounded-md border border-input bg-background font-mono text-xs resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+              data-testid={`textarea-code-${example.id}`}
+              spellCheck={false}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Edit the HTML attributes above to test different configurations in real-time.
+            </p>
           </div>
         </div>
-
-        {showCode && (
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-              Configuration
-            </h4>
-            <CodeBlock code={generateCode()} language="html" />
-          </div>
-        )}
 
         <div>
           <h4 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide">
