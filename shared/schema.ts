@@ -70,6 +70,7 @@ export const exampleConfigSchema = z.object({
   category: z.string(),
   config: numericInputConfigSchema,
   code: z.string(),
+  configurable: z.boolean().optional(),
 });
 
 export type ExampleConfig = z.infer<typeof exampleConfigSchema>;

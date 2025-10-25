@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CodeBlock } from '@/components/CodeBlock';
 import { ExampleCard } from '@/components/ExampleCard';
+import { ConfigurableExampleCard } from '@/components/ConfigurableExampleCard';
 import { AttributeCard } from '@/components/AttributeCard';
 import { TestRunner } from '@/components/TestRunner';
 import { Badge } from '@/components/ui/badge';
@@ -199,7 +200,11 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
 
         <div className="grid lg:grid-cols-2 gap-6">
           {examples.map((example) => (
-            <ExampleCard key={example.id} example={example} scriptLoaded={scriptLoaded} />
+            example.configurable ? (
+              <ConfigurableExampleCard key={example.id} example={example} scriptLoaded={scriptLoaded} />
+            ) : (
+              <ExampleCard key={example.id} example={example} scriptLoaded={scriptLoaded} />
+            )
           ))}
         </div>
       </section>

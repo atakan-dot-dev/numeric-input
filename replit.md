@@ -31,6 +31,13 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 
 ## Key Features
 
+### Interactive Examples
+- **20 Examples**: Comprehensive collection covering all library features
+- **Configurable Examples**: Dynamic min/max controls on currency and percentage examples
+  - Adjust constraints in real-time to test negative values and sign flipping
+  - Perfect for testing edge cases and validation behavior
+- **Categories**: Basic, Validation, Formatting, Base, Display, Locale, Configurable
+
 ### Attributes Supported
 
 **Validation:**
@@ -66,19 +73,20 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 ```
 ├── public/
 │   ├── numeric-input.js        # Core library
-│   └── numeric-input.test.js   # Test suite
+│   └── numeric-input.test.js   # Test suite (32 tests)
 ├── client/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── AppSidebar.tsx      # Navigation sidebar
-│   │   │   ├── AttributeCard.tsx   # Attribute documentation
-│   │   │   ├── CodeBlock.tsx       # Syntax highlighted code
-│   │   │   ├── ExampleCard.tsx     # Interactive examples
-│   │   │   ├── TestRunner.tsx      # Test suite UI
-│   │   │   └── ThemeToggle.tsx     # Dark/light mode
+│   │   │   ├── AppSidebar.tsx              # Navigation sidebar
+│   │   │   ├── AttributeCard.tsx           # Attribute documentation
+│   │   │   ├── CodeBlock.tsx               # Syntax highlighted code
+│   │   │   ├── ExampleCard.tsx             # Interactive examples
+│   │   │   ├── ConfigurableExampleCard.tsx # Adjustable min/max examples
+│   │   │   ├── TestRunner.tsx              # Test suite UI
+│   │   │   └── ThemeToggle.tsx             # Dark/light mode
 │   │   ├── data/
 │   │   │   ├── attributes.ts       # Attribute definitions
-│   │   │   ├── examples.ts         # Example configurations
+│   │   │   ├── examples.ts         # Example configurations (20 examples)
 │   │   │   └── tests.ts            # Test suite data
 │   │   ├── hooks/
 │   │   │   ├── useNumericInput.ts  # Library integration
