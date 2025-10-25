@@ -305,9 +305,9 @@
     /**
      * Handle keydown event
      */
-    handleKeyDown(event, element, config) {
+    handleKeyDown(event, originalInput, displayInput, config) {
       const key = event.key;
-      const currentValue = this.parseValue(element.value, config);
+      const currentValue = this.parseValue(displayInput.value, config);
 
       // Handle arrow keys with modifiers
       if (key === 'ArrowUp' || key === 'ArrowDown') {
@@ -328,9 +328,10 @@
         const newValue = (currentValue || 0) + (direction * increment);
 
         if (this.isValidValue(newValue, config)) {
-          const formatted = this.formatValue(newValue, config);
-          element.value = formatted;
-          element.dispatchEvent(new Event('input', { bubbles: true }));
+          originalInput.value = String(newValue); // Store numeric value
+          displayInput.value = this.formatValue(newValue, config); // Show formatted
+          displayInput.setAttribute('data-old-value', displayInput.value);
+          originalInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         return;
       }
@@ -348,9 +349,10 @@
           event.preventDefault();
           if (currentValue !== '' && currentValue !== 0) {
             const newValue = -currentValue;
-            const formatted = this.formatValue(newValue, config);
-            element.value = formatted;
-            element.dispatchEvent(new Event('input', { bubbles: true }));
+            originalInput.value = String(newValue);
+            displayInput.value = this.formatValue(newValue, config);
+            displayInput.setAttribute('data-old-value', displayInput.value);
+            originalInput.dispatchEvent(new Event('input', { bubbles: true }));
           }
           // If no value yet, do nothing (prevents multiple signs)
           return;
@@ -369,9 +371,10 @@
           event.preventDefault();
           if (currentValue !== '' && currentValue < 0) {
             const newValue = Math.abs(currentValue);
-            const formatted = this.formatValue(newValue, config);
-            element.value = formatted;
-            element.dispatchEvent(new Event('input', { bubbles: true }));
+            originalInput.value = String(newValue);
+            displayInput.value = this.formatValue(newValue, config);
+            displayInput.setAttribute('data-old-value', displayInput.value);
+            originalInput.dispatchEvent(new Event('input', { bubbles: true }));
           }
           // If no value yet or already positive, do nothing (prevents multiple signs)
           return;
@@ -382,7 +385,7 @@
     /**
      * Handle paste event
      */
-    handlePaste(event, element, config) {
+    handlePaste(event, originalInput, displayInput, config) {
       event.preventDefault();
       
       // Get pasted text
@@ -400,44 +403,37 @@
       }
       
       // Insert filtered text at cursor position
-      const cursorPos = element.selectionStart;
-      const before = element.value.substring(0, cursorPos);
-      const after = element.value.substring(element.selectionEnd);
-      element.value = before + filtered + after;
+      const cursorPos = displayInput.selectionStart;
+      const before = displayInput.value.substring(0, cursorPos);
+      const after = displayInput.value.substring(displayInput.selectionEnd);
+      displayInput.value = before + filtered + after;
       
       // Trigger input event to validate and format
-      element.dispatchEvent(new Event('input', { bubbles: true }));
+      displayInput.dispatchEvent(new Event('input', { bubbles: true }));
       
       // Set cursor position after pasted text
       const newPos = cursorPos + filtered.length;
-      element.setSelectionRange(newPos, newPos);
+      displayInput.setSelectionRange(newPos, newPos);
     },
 
     /**
      * Handle input event
      */
-    handleInput(event, element, config) {
-      const value = element.value;
+    handleInput(event, originalInput, displayInput, config) {
+      const value = displayInput.value;
       
       // Store cursor position
-      const cursorPos = element.selectionStart;
-      const oldValue = element.getAttribute('data-old-value') || '';
+      const cursorPos = displayInput.selectionStart;
+      const oldValue = displayInput.getAttribute('data-old-value') || '';
       
       // Parse and validate
       const parsed = this.parseValue(value, config);
       
       // Allow empty values
       if (value === '' || value === config.prefix + config.postfix) {
-        element.setAttribute('data-old-value', '');
-        element.setAttribute('data-numeric-value', '');
+        originalInput.value = '';
+        displayInput.setAttribute('data-old-value', '');
         return;
-      }
-      
-      // Store the numeric value for external reading (always set if we can parse)
-      if (parsed !== '' && !isNaN(parsed)) {
-        element.setAttribute('data-numeric-value', String(parsed));
-      } else {
-        element.setAttribute('data-numeric-value', '');
       }
       
       // For inputs without formatting (no prefix/postfix/separators), be lenient
@@ -448,17 +444,18 @@
       if (!hasFormatting) {
         // Simple mode: just validate and store
         if (parsed !== '' && !isNaN(parsed) && this.isValidValue(parsed, config)) {
-          element.setAttribute('data-old-value', value);
+          originalInput.value = String(parsed); // Store numeric value
+          displayInput.setAttribute('data-old-value', value);
         } else if (parsed !== '' && !isNaN(parsed)) {
           // Valid number but violates constraints - revert
-          element.value = oldValue;
+          displayInput.value = oldValue;
           const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
-          element.setSelectionRange(newPos, newPos);
+          displayInput.setSelectionRange(newPos, newPos);
         } else if (value !== oldValue) {
           // Can't parse - revert
-          element.value = oldValue;
+          displayInput.value = oldValue;
           const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
-          element.setSelectionRange(newPos, newPos);
+          displayInput.setSelectionRange(newPos, newPos);
         }
         return;
       }
@@ -471,29 +468,30 @@
         
         if (isComplete && this.isValidValue(parsed, config)) {
           // Value is valid and complete, reformat
+          originalInput.value = String(parsed); // Store numeric value
           const formatted = this.formatValue(parsed, config);
           if (formatted !== value) {
-            element.value = formatted;
+            displayInput.value = formatted;
             // Restore cursor, accounting for formatting changes
             const lengthDiff = formatted.length - value.length;
             const newPos = Math.max(0, Math.min(formatted.length, cursorPos + lengthDiff));
-            element.setSelectionRange(newPos, newPos);
+            displayInput.setSelectionRange(newPos, newPos);
           }
-          element.setAttribute('data-old-value', formatted);
+          displayInput.setAttribute('data-old-value', formatted);
         } else if (!this.isValidValue(parsed, config)) {
           // Value is invalid, revert to old value
-          element.value = oldValue;
+          displayInput.value = oldValue;
           const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
-          element.setSelectionRange(newPos, newPos);
+          displayInput.setSelectionRange(newPos, newPos);
         } else {
           // Value is valid but incomplete, keep as-is and store
-          element.setAttribute('data-old-value', value);
+          displayInput.setAttribute('data-old-value', value);
         }
       } else {
         // Can't parse - might be intermediate input, revert to old
-        element.value = oldValue;
+        displayInput.value = oldValue;
         const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
-        element.setSelectionRange(newPos, newPos);
+        displayInput.setSelectionRange(newPos, newPos);
       }
     },
 
@@ -505,47 +503,84 @@
         ? Array.from(elements)
         : [elements];
 
-      targets.forEach(element => {
-        if (element.type !== 'number' && element.type !== 'text') {
+      targets.forEach(originalInput => {
+        if (originalInput.type !== 'number' && originalInput.type !== 'text') {
           console.warn('NumericInput can only be attached to input elements with type="number" or type="text"');
           return;
         }
 
+        // Skip if already attached
+        if (this._attached.has(originalInput)) {
+          return;
+        }
+
         // Parse configuration
-        const config = this.parseConfig(element);
+        const config = this.parseConfig(originalInput);
 
-        // Create event handlers
-        const keydownHandler = (e) => this.handleKeyDown(e, element, config);
-        const inputHandler = (e) => this.handleInput(e, element, config);
-        const pasteHandler = (e) => this.handlePaste(e, element, config);
+        // Create display input (visible, shows formatted value)
+        const displayInput = document.createElement('input');
+        displayInput.type = 'text';
+        
+        // Copy attributes to display input
+        const copyAttrs = ['placeholder', 'disabled', 'readonly', 'class', 'style', 'data-testid'];
+        copyAttrs.forEach(attr => {
+          const value = originalInput.getAttribute(attr);
+          if (value !== null) {
+            displayInput.setAttribute(attr, value);
+          }
+        });
 
-        // Store handlers for later removal
-        this._attached.set(element, {
+        // Transfer ID to display input (for labels and accessibility)
+        const originalId = originalInput.getAttribute('id');
+        if (originalId) {
+          displayInput.setAttribute('id', originalId);
+          originalInput.removeAttribute('id');
+          originalInput.setAttribute('id', originalId + '-numeric');
+        }
+
+        // Hide the original input visually but keep it in the DOM
+        originalInput.style.position = 'absolute';
+        originalInput.style.left = '-9999px';
+        originalInput.style.width = '1px';
+        originalInput.style.height = '1px';
+        originalInput.style.opacity = '0';
+        originalInput.style.pointerEvents = 'none';
+        originalInput.setAttribute('tabindex', '-1');
+        originalInput.setAttribute('aria-hidden', 'true');
+
+        // Insert display input right after original
+        originalInput.parentNode.insertBefore(displayInput, originalInput.nextSibling);
+
+        // Initialize values
+        if (originalInput.value) {
+          const parsed = this.parseValue(originalInput.value, config);
+          if (parsed !== '' && !isNaN(parsed)) {
+            originalInput.value = String(parsed); // Store numeric
+            displayInput.value = this.formatValue(parsed, config); // Show formatted
+          }
+        }
+
+        // Create event handlers (they receive both inputs)
+        const keydownHandler = (e) => this.handleKeyDown(e, originalInput, displayInput, config);
+        const inputHandler = (e) => this.handleInput(e, originalInput, displayInput, config);
+        const pasteHandler = (e) => this.handlePaste(e, originalInput, displayInput, config);
+
+        // Store both inputs and handlers
+        this._attached.set(originalInput, {
           config,
+          displayInput,
           keydownHandler,
           inputHandler,
           pasteHandler,
         });
 
-        // Attach event listeners
-        element.addEventListener('keydown', keydownHandler);
-        element.addEventListener('input', inputHandler);
-        element.addEventListener('paste', pasteHandler);
+        // Attach event listeners to display input
+        displayInput.addEventListener('keydown', keydownHandler);
+        displayInput.addEventListener('input', inputHandler);
+        displayInput.addEventListener('paste', pasteHandler);
 
-        // Initialize with current value
-        if (element.value) {
-          const parsed = this.parseValue(element.value, config);
-          if (parsed !== '' && !isNaN(parsed)) {
-            element.value = this.formatValue(parsed, config);
-            element.setAttribute('data-numeric-value', String(parsed));
-          }
-        }
-
-        // Initialize data-old-value and data-numeric-value
-        element.setAttribute('data-old-value', element.value);
-        if (!element.hasAttribute('data-numeric-value')) {
-          element.setAttribute('data-numeric-value', '');
-        }
+        // Initialize data-old-value on display input
+        displayInput.setAttribute('data-old-value', displayInput.value);
       });
     },
 
@@ -557,18 +592,40 @@
         ? Array.from(elements)
         : [elements];
 
-      targets.forEach(element => {
-        const data = this._attached.get(element);
+      targets.forEach(originalInput => {
+        const data = this._attached.get(originalInput);
         if (!data) return;
 
-        // Remove event listeners
-        element.removeEventListener('keydown', data.keydownHandler);
-        element.removeEventListener('input', data.inputHandler);
-        element.removeEventListener('paste', data.pasteHandler);
+        const { displayInput, keydownHandler, inputHandler, pasteHandler } = data;
+
+        // Remove event listeners from display input
+        displayInput.removeEventListener('keydown', keydownHandler);
+        displayInput.removeEventListener('input', inputHandler);
+        displayInput.removeEventListener('paste', pasteHandler);
+
+        // Remove display input from DOM
+        if (displayInput.parentNode) {
+          displayInput.parentNode.removeChild(displayInput);
+        }
+
+        // Restore original input
+        originalInput.style.position = '';
+        originalInput.style.left = '';
+        originalInput.style.width = '';
+        originalInput.style.height = '';
+        originalInput.style.opacity = '';
+        originalInput.style.pointerEvents = '';
+        originalInput.removeAttribute('tabindex');
+        originalInput.removeAttribute('aria-hidden');
+        
+        // Restore ID if it was transferred
+        const displayId = displayInput.getAttribute('id');
+        if (displayId && originalInput.getAttribute('id') === displayId + '-numeric') {
+          originalInput.setAttribute('id', displayId);
+        }
 
         // Clean up
-        element.removeAttribute('data-old-value');
-        this._attached.delete(element);
+        this._attached.delete(originalInput);
       });
     },
 
