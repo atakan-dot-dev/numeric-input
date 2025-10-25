@@ -621,6 +621,13 @@ TestRunner.suite('Paste Filtering Tests', () => {
 });
 
 // Export for use in browser and Node
+if (typeof window !== 'undefined') {
+  window.TestRunner = TestRunner;
+  window.assert = assert;
+  window.assertEqual = assertEqual;
+  window.assertThrows = assertThrows;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { TestRunner, assert, assertEqual, assertThrows };
 }
