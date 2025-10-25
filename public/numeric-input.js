@@ -521,7 +521,7 @@
         const displayInput = document.createElement('input');
         displayInput.type = 'text';
         
-        // Copy attributes to display input
+        // Copy attributes to display input (but NOT 'name' to avoid duplicate form fields)
         const copyAttrs = ['placeholder', 'disabled', 'readonly', 'class', 'style', 'data-testid'];
         copyAttrs.forEach(attr => {
           const value = originalInput.getAttribute(attr);
@@ -529,6 +529,9 @@
             displayInput.setAttribute(attr, value);
           }
         });
+        
+        // Ensure display input doesn't have name attribute (only original should for form submission)
+        displayInput.removeAttribute('name');
 
         // Transfer ID to display input (for labels and accessibility)
         const originalId = originalInput.getAttribute('id');
