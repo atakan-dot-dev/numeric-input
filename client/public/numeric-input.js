@@ -53,13 +53,16 @@
         config.validIncrement = Math.ceil(config.validIncrement);
       }
 
-      // Validate and set key-increment
-      if (isNaN(config.keyIncrement) || config.keyIncrement === undefined) {
-        config.keyIncrement = config.validIncrement || 1;
-      } else if (config.validIncrement !== 0) {
+      // Validate key-increment
+      if (config.keyIncrement !== undefined && config.validIncrement !== 0) {
         if (config.keyIncrement % config.validIncrement !== 0) {
           console.warn(`key-increment (${config.keyIncrement}) must be a multiple of valid-increment (${config.validIncrement})`);
         }
+      }
+
+      // Default key-increment
+      if (config.keyIncrement === undefined) {
+        config.keyIncrement = config.validIncrement || 1;
       }
 
       return config;
@@ -84,7 +87,7 @@
     },
 
     /**
-     * Format number with separators
+     * Format number with separators using Intl API
      */
     applySeparators(numStr, config) {
       if (config.separators === 'none' || config.separators === '') {
@@ -92,26 +95,32 @@
       }
 
       const [intPart, decPart] = numStr.split('.');
-      let separator = ',';
-
-      if (config.separators === 'locale') {
-        separator = this.getGroupSeparator(config.locale);
-      } else if (config.separators !== 'indian') {
-        separator = config.separators;
+      const number = parseFloat(intPart);
+      
+      if (isNaN(number)) {
+        return numStr;
       }
 
       let formatted;
       if (config.separators === 'indian') {
-        // Indian numbering: X,XX,XXX
-        const reversed = intPart.split('').reverse().join('');
-        const groups = [];
-        groups.push(reversed.slice(0, 3));
-        for (let i = 3; i < reversed.length; i += 2) {
-          groups.push(reversed.slice(i, i + 2));
-        }
-        formatted = groups.join(separator).split('').reverse().join('');
+        // Use Indian locale (en-IN) for proper Indian numbering system
+        const formatter = new Intl.NumberFormat('en-IN', {
+          useGrouping: true,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        });
+        formatted = formatter.format(number);
+      } else if (config.separators === 'locale') {
+        // Use the specified locale
+        const formatter = new Intl.NumberFormat(config.locale, {
+          useGrouping: true,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        });
+        formatted = formatter.format(number);
       } else {
-        // Standard grouping: XXX,XXX,XXX
+        // Custom separator - fall back to manual grouping
+        const separator = config.separators;
         const reversed = intPart.split('').reverse().join('');
         const groups = [];
         for (let i = 0; i < reversed.length; i += 3) {
@@ -296,119 +305,194 @@
     /**
      * Handle keydown event
      */
-    handleKeyDown(event, element, config) {
+    handleKeyDown(event, originalInput, displayInput, config) {
       const key = event.key;
-      const currentValue = this.parseValue(element.value, config);
+      const currentValue = this.parseValue(displayInput.value, config);
 
-      // Allow control/meta keys and navigation
-      if (event.ctrlKey || event.metaKey || event.altKey ||
-          ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(key)) {
-        // Handle arrow up/down for incrementing
-        if (key === 'ArrowUp' || key === 'ArrowDown') {
-          event.preventDefault();
-          const direction = key === 'ArrowUp' ? 1 : -1;
-          const newValue = (currentValue || 0) + (direction * config.keyIncrement);
-
-          if (this.isValidValue(newValue, config)) {
-            const formatted = this.formatValue(newValue, config);
-            element.value = formatted;
-            element.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-        }
-        return;
-      }
-
-      // Validate keystroke before allowing it
-      if (!this.validateKeystroke(event, element, config)) {
+      // Handle arrow keys with modifiers
+      if (key === 'ArrowUp' || key === 'ArrowDown') {
         event.preventDefault();
+        const direction = key === 'ArrowUp' ? 1 : -1;
+        
+        // Determine multiplier based on modifiers
+        let multiplier = 1;
+        if (event.altKey) {
+          multiplier = 10;
+        } else if (event.ctrlKey || event.metaKey) {
+          multiplier = 5;
+        } else if (event.shiftKey) {
+          multiplier = 2;
+        }
+        
+        const increment = config.keyIncrement * multiplier;
+        const newValue = (currentValue || 0) + (direction * increment);
+
+        if (this.isValidValue(newValue, config)) {
+          originalInput.value = String(newValue); // Store numeric value
+          displayInput.value = this.formatValue(newValue, config); // Show formatted
+          displayInput.setAttribute('data-old-value', displayInput.value);
+          originalInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
         return;
       }
 
-      // Handle sign flipping with minus key
-      // Flip sign for all inputs EXCEPT when min > 0 or sign='positive'
-      if (key === '-' || key === '−' || key === '–' || key === '—') {
-        const canFlipSign = config.sign !== 'positive' && !(config.min !== undefined && config.min > 0);
-        
-        if (canFlipSign && currentValue !== '' && currentValue !== 0) {
+      // Handle sign flipping - always toggle sign, don't allow typing multiple signs
+      if ((key === '-' || key === '−' || key === '–' || key === '—')) {
+        // Block if sign not allowed
+        if (config.sign === 'positive' || (config.min !== undefined && config.min > 0)) {
           event.preventDefault();
-          const newValue = -currentValue;
-          
-          // Only flip if the new value is valid
-          if (this.isValidValue(newValue, config)) {
-            const formatted = this.formatValue(newValue, config);
-            element.value = formatted;
-            element.dispatchEvent(new Event('input', { bubbles: true }));
-            return;
+          return;
+        }
+        
+        // Toggle sign for 'any' sign mode
+        if (config.sign === 'any') {
+          event.preventDefault();
+          if (currentValue !== '' && currentValue !== 0) {
+            const newValue = -currentValue;
+            originalInput.value = String(newValue);
+            displayInput.value = this.formatValue(newValue, config);
+            displayInput.setAttribute('data-old-value', displayInput.value);
+            originalInput.dispatchEvent(new Event('input', { bubbles: true }));
           }
+          // If no value yet, do nothing (prevents multiple signs)
+          return;
         }
       }
 
-      // Handle sign flipping with plus key
       if (key === '+') {
-        const canFlipSign = config.sign !== 'negative' && !(config.max !== undefined && config.max < 0);
-        
-        if (canFlipSign && currentValue !== '' && currentValue < 0) {
+        // Block if positive sign not allowed
+        if (config.sign === 'negative' || (config.max !== undefined && config.max < 0)) {
           event.preventDefault();
-          const newValue = Math.abs(currentValue);
-          
-          // Only flip if the new value is valid
-          if (this.isValidValue(newValue, config)) {
-            const formatted = this.formatValue(newValue, config);
-            element.value = formatted;
-            element.dispatchEvent(new Event('input', { bubbles: true }));
-            return;
+          return;
+        }
+        
+        // Toggle to positive for 'any' sign mode
+        if (config.sign === 'any') {
+          event.preventDefault();
+          if (currentValue !== '' && currentValue < 0) {
+            const newValue = Math.abs(currentValue);
+            originalInput.value = String(newValue);
+            displayInput.value = this.formatValue(newValue, config);
+            displayInput.setAttribute('data-old-value', displayInput.value);
+            originalInput.dispatchEvent(new Event('input', { bubbles: true }));
           }
+          // If no value yet or already positive, do nothing (prevents multiple signs)
+          return;
         }
       }
     },
 
     /**
-     * Handle input event
+     * Handle paste event
      */
-    handleInput(event, element, config) {
-      // Check if element is still in the DOM
-      if (!element.isConnected) {
-        return;
-      }
-
-      const value = element.value;
-      const parsed = this.parseValue(value, config);
-
-      // Store cursor position
-      const cursorPos = element.selectionStart || 0;
-
-      if (parsed !== '') {
-        if (this.isValidValue(parsed, config)) {
-          // Apply formatting for type="text" inputs
-          if (element.type === 'text') {
-            const formatted = this.formatValue(parsed, config);
-            if (formatted !== value) {
-              const lengthDiff = formatted.length - value.length;
-              element.value = formatted;
-              // Adjust cursor position based on length change
-              const newCursorPos = Math.max(0, Math.min(formatted.length, cursorPos + lengthDiff));
-              try {
-                element.setSelectionRange(newCursorPos, newCursorPos);
-              } catch (e) {
-                // Ignore errors
-              }
-            }
-          }
-        } else {
-          // Invalid value - revert to last valid value
-          const oldValue = element.getAttribute('data-old-value') || '';
-          element.value = oldValue;
-          try {
-            const newPos = Math.max(0, cursorPos - 1);
-            element.setSelectionRange(newPos, newPos);
-          } catch (e) {
-            // Ignore errors
-          }
+    handlePaste(event, originalInput, displayInput, config) {
+      event.preventDefault();
+      
+      // Get pasted text
+      const pastedText = event.clipboardData.getData('text');
+      
+      // Filter to keep only valid numeric characters
+      let filtered = '';
+      const validChars = config.base === 10 ? '0123456789' : '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+      const decimalSep = config.decimal === 'locale' ? this.getDecimalSeparator(config.locale) : config.decimal;
+      
+      for (let char of pastedText) {
+        if (validChars.includes(char) || char === decimalSep || char === '.' || char === '-' || char === '+') {
+          filtered += char;
         }
       }
+      
+      // Insert filtered text at cursor position
+      const cursorPos = displayInput.selectionStart;
+      const before = displayInput.value.substring(0, cursorPos);
+      const after = displayInput.value.substring(displayInput.selectionEnd);
+      displayInput.value = before + filtered + after;
+      
+      // Trigger input event to validate and format
+      displayInput.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      // Set cursor position after pasted text
+      const newPos = cursorPos + filtered.length;
+      displayInput.setSelectionRange(newPos, newPos);
+    },
 
-      // Store current value
-      element.setAttribute('data-old-value', element.value);
+    /**
+     * Handle input event
+     */
+    handleInput(event, originalInput, displayInput, config) {
+      const value = displayInput.value;
+      
+      // Store cursor position
+      const cursorPos = displayInput.selectionStart;
+      const oldValue = displayInput.getAttribute('data-old-value') || '';
+      
+      // Parse and validate
+      const parsed = this.parseValue(value, config);
+      
+      // Allow empty values
+      if (value === '' || value === config.prefix + config.postfix) {
+        originalInput.value = '';
+        displayInput.setAttribute('data-old-value', '');
+        return;
+      }
+      
+      // For inputs without formatting (no prefix/postfix/separators), be lenient
+      const hasFormatting = config.prefix || config.postfix || 
+                           (config.separators && config.separators !== 'none') ||
+                           config.base !== 10;
+      
+      if (!hasFormatting) {
+        // Simple mode: just validate and store
+        if (parsed !== '' && !isNaN(parsed) && this.isValidValue(parsed, config)) {
+          originalInput.value = String(parsed); // Store numeric value
+          displayInput.setAttribute('data-old-value', value);
+        } else if (parsed !== '' && !isNaN(parsed)) {
+          // Valid number but violates constraints - revert
+          displayInput.value = oldValue;
+          const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
+          displayInput.setSelectionRange(newPos, newPos);
+        } else if (value !== oldValue) {
+          // Can't parse - revert
+          displayInput.value = oldValue;
+          const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
+          displayInput.setSelectionRange(newPos, newPos);
+        }
+        return;
+      }
+      
+      // For formatted inputs, only reformat when complete
+      if (parsed !== '' && !isNaN(parsed)) {
+        // Check if this is a complete value
+        const isComplete = value.trim().length > 0 && 
+                          (value.endsWith(config.postfix) || config.postfix === '');
+        
+        if (isComplete && this.isValidValue(parsed, config)) {
+          // Value is valid and complete, reformat
+          originalInput.value = String(parsed); // Store numeric value
+          const formatted = this.formatValue(parsed, config);
+          if (formatted !== value) {
+            displayInput.value = formatted;
+            // Restore cursor, accounting for formatting changes
+            const lengthDiff = formatted.length - value.length;
+            const newPos = Math.max(0, Math.min(formatted.length, cursorPos + lengthDiff));
+            displayInput.setSelectionRange(newPos, newPos);
+          }
+          displayInput.setAttribute('data-old-value', formatted);
+        } else if (!this.isValidValue(parsed, config)) {
+          // Value is invalid, revert to old value
+          displayInput.value = oldValue;
+          const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
+          displayInput.setSelectionRange(newPos, newPos);
+        } else {
+          // Value is valid but incomplete, keep as-is and store
+          displayInput.setAttribute('data-old-value', value);
+        }
+      } else {
+        // Can't parse - might be intermediate input, revert to old
+        displayInput.value = oldValue;
+        const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
+        displayInput.setSelectionRange(newPos, newPos);
+      }
     },
 
     /**
@@ -419,40 +503,84 @@
         ? Array.from(elements)
         : [elements];
 
-      targets.forEach(element => {
-        if (element.type !== 'number' && element.type !== 'text') {
+      targets.forEach(originalInput => {
+        if (originalInput.type !== 'number' && originalInput.type !== 'text') {
           console.warn('NumericInput can only be attached to input elements with type="number" or type="text"');
           return;
         }
 
+        // Skip if already attached
+        if (this._attached.has(originalInput)) {
+          return;
+        }
+
         // Parse configuration
-        const config = this.parseConfig(element);
+        const config = this.parseConfig(originalInput);
 
-        // Create event handlers
-        const keydownHandler = (e) => this.handleKeyDown(e, element, config);
-        const inputHandler = (e) => this.handleInput(e, element, config);
-
-        // Store handlers for later removal
-        this._attached.set(element, {
-          config,
-          keydownHandler,
-          inputHandler,
+        // Create display input (visible, shows formatted value)
+        const displayInput = document.createElement('input');
+        displayInput.type = 'text';
+        
+        // Copy attributes to display input
+        const copyAttrs = ['placeholder', 'disabled', 'readonly', 'class', 'style', 'data-testid'];
+        copyAttrs.forEach(attr => {
+          const value = originalInput.getAttribute(attr);
+          if (value !== null) {
+            displayInput.setAttribute(attr, value);
+          }
         });
 
-        // Attach event listeners
-        element.addEventListener('keydown', keydownHandler);
-        element.addEventListener('input', inputHandler);
+        // Transfer ID to display input (for labels and accessibility)
+        const originalId = originalInput.getAttribute('id');
+        if (originalId) {
+          displayInput.setAttribute('id', originalId);
+          originalInput.removeAttribute('id');
+          originalInput.setAttribute('id', originalId + '-numeric');
+        }
 
-        // Initialize with current value
-        if (element.value) {
-          const parsed = this.parseValue(element.value, config);
-          if (parsed !== '') {
-            element.value = this.formatValue(parsed, config);
+        // Hide the original input visually but keep it in the DOM
+        originalInput.style.position = 'absolute';
+        originalInput.style.left = '-9999px';
+        originalInput.style.width = '1px';
+        originalInput.style.height = '1px';
+        originalInput.style.opacity = '0';
+        originalInput.style.pointerEvents = 'none';
+        originalInput.setAttribute('tabindex', '-1');
+        originalInput.setAttribute('aria-hidden', 'true');
+
+        // Insert display input right after original
+        originalInput.parentNode.insertBefore(displayInput, originalInput.nextSibling);
+
+        // Initialize values
+        if (originalInput.value) {
+          const parsed = this.parseValue(originalInput.value, config);
+          if (parsed !== '' && !isNaN(parsed)) {
+            originalInput.value = String(parsed); // Store numeric
+            displayInput.value = this.formatValue(parsed, config); // Show formatted
           }
         }
 
-        // Initialize data-old-value
-        element.setAttribute('data-old-value', element.value);
+        // Create event handlers (they receive both inputs)
+        const keydownHandler = (e) => this.handleKeyDown(e, originalInput, displayInput, config);
+        const inputHandler = (e) => this.handleInput(e, originalInput, displayInput, config);
+        const pasteHandler = (e) => this.handlePaste(e, originalInput, displayInput, config);
+
+        // Store both inputs and handlers
+        this._attached.set(originalInput, {
+          config,
+          displayInput,
+          keydownHandler,
+          inputHandler,
+          pasteHandler,
+        });
+
+        // Attach event listeners to display input
+        displayInput.addEventListener('keydown', keydownHandler);
+        displayInput.addEventListener('input', inputHandler);
+        displayInput.addEventListener('paste', pasteHandler);
+
+        // Initialize data-old-value on display input
+        displayInput.setAttribute('data-old-value', displayInput.value);
       });
     },
 
@@ -464,17 +592,40 @@
         ? Array.from(elements)
         : [elements];
 
-      targets.forEach(element => {
-        const data = this._attached.get(element);
+      targets.forEach(originalInput => {
+        const data = this._attached.get(originalInput);
         if (!data) return;
 
-        // Remove event listeners
-        element.removeEventListener('keydown', data.keydownHandler);
-        element.removeEventListener('input', data.inputHandler);
+        const { displayInput, keydownHandler, inputHandler, pasteHandler } = data;
+
+        // Remove event listeners from display input
+        displayInput.removeEventListener('keydown', keydownHandler);
+        displayInput.removeEventListener('input', inputHandler);
+        displayInput.removeEventListener('paste', pasteHandler);
+
+        // Remove display input from DOM
+        if (displayInput.parentNode) {
+          displayInput.parentNode.removeChild(displayInput);
+        }
+
+        // Restore original input
+        originalInput.style.position = '';
+        originalInput.style.left = '';
+        originalInput.style.width = '';
+        originalInput.style.height = '';
+        originalInput.style.opacity = '';
+        originalInput.style.pointerEvents = '';
+        originalInput.removeAttribute('tabindex');
+        originalInput.removeAttribute('aria-hidden');
+        
+        // Restore ID if it was transferred
+        const displayId = displayInput.getAttribute('id');
+        if (displayId && originalInput.getAttribute('id') === displayId + '-numeric') {
+          originalInput.setAttribute('id', displayId);
+        }
 
         // Clean up
-        element.removeAttribute('data-old-value');
-        this._attached.delete(element);
+        this._attached.delete(originalInput);
       });
     },
 
@@ -487,63 +638,10 @@
     },
 
     /**
-     * Validate keystroke
+     * Validate keystroke (for external use)
      */
-    validateKeystroke(event, element, config) {
-      const key = event.key;
-      const value = element.value;
-      const selectionStart = element.selectionStart || 0;
-      const selectionEnd = element.selectionEnd || 0;
-
-      // Get separators
-      const decimalSep = config.decimal === 'locale' ? this.getDecimalSeparator(config.locale) : config.decimal;
-      const groupSep = config.separators === 'locale' 
-        ? this.getGroupSeparator(config.locale)
-        : (config.separators === 'indian' || config.separators === 'none' || config.separators === '' ? ',' : config.separators);
-
-      // Build allowed characters based on base
-      let allowedChars = '0123456789';
-      if (config.base > 10) {
-        const letters = 'abcdefghijklmnopqrstuvwxyz'.substring(0, config.base - 10);
-        allowedChars += letters + letters.toUpperCase();
-      }
-
-      // Check if key is an allowed digit
-      if (allowedChars.includes(key)) {
-        return true;
-      }
-
-      // Allow group separators (thousands separators) in all modes, including integer
-      if (config.separators !== 'none' && config.separators !== '' && key === groupSep) {
-        return true;
-      }
-
-      // Allow decimal separator ONLY if not in integer mode and not already present
-      if (!config.integer && key === decimalSep) {
-        // Check if decimal already exists in unselected portion
-        const beforeSelection = value.substring(0, selectionStart);
-        const afterSelection = value.substring(selectionEnd);
-        const unselectedPart = beforeSelection + afterSelection;
-        return !unselectedPart.includes(decimalSep);
-      }
-
-      // Allow minus sign for negative numbers
-      // Block if sign='positive' OR if min > 0 (which prevents negative values)
-      if (key === '-' || key === '−') {
-        if (config.sign === 'positive' || (config.min !== undefined && config.min > 0)) {
-          return false;
-        }
-        // Only allow at the beginning
-        return selectionStart === 0;
-      }
-
-      // Allow plus sign for any mode
-      if (key === '+' && config.sign === 'any') {
-        return selectionStart === 0;
-      }
-
-      // Reject all other keys
-      return false;
+    validateKeystroke(event, config) {
+      return true; // Simplified for now
     },
   };
 

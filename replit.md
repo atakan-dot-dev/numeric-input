@@ -5,11 +5,14 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 
 ## Architecture
 
-### Core Library (`public/numeric-input.js`)
+### Core Library (`public/numeric-input.js` and `client/public/numeric-input.js`)
 - **Vanilla JavaScript**: Framework-agnostic core that can integrate with any framework
+- **Dual-Input Architecture**: When attached, creates two inputs:
+  - **Original (Hidden)**: Stores raw numeric value (e.g., "1234", "-25") - gets "-numeric" suffix on ID
+  - **Display (Visible)**: Shows formatted value (e.g., "$1,234", "-25%") - keeps original ID
 - **Attach/Detach API**: Simple methods to bind/unbind library to input elements
 - **Configuration System**: Parses attributes from HTML elements
-- **Event Handling**: Manages keydown, keypress, and input events
+- **Event Handling**: Manages keydown, input, and paste events on display input
 - **Multi-Base Support**: Handles bases 2-36 with proper letter casing
 - **Locale Awareness**: Automatic formatting based on Intl API
 - **Smart Validation**: Prevents invalid keystrokes before they're entered
