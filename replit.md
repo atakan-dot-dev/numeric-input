@@ -21,8 +21,8 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 - **Comprehensive Coverage**: Tests for all attributes and behaviors
 - **Simple Test Runner**: Custom lightweight test framework
 - **Browser Compatible**: Runs directly in the browser
-- **14 Test Suites**: Validation, Formatting, Display, Keystroke, Edge Cases, Locale, Arrow Key Modifiers, Paste Filtering, Floating Point Precision, Increment Start, Non-Base-10 Increments, Postfix Display, Range Constraints, European Format
-- **59 Test Cases**: Covering all functionality including bug regression tests
+- **16 Test Suites**: Validation, Formatting, Display, Keystroke, Edge Cases, Locale, Arrow Key Modifiers, Paste Filtering, Floating Point Precision, Increment Start, Non-Base-10 Increments, Postfix Display, Range Constraints, European Format, Precision Preservation, Validation Timeout
+- **68 Test Cases**: Covering all functionality including bug regression tests
 
 ### Demo Application (React + TypeScript)
 - **Sidebar Navigation**: Easy access to all sections
@@ -50,6 +50,7 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 - `sign`: Controls sign behavior (any, positive, negative)
 - `min`, `max`: Range constraints
 - `increment-start`: Base value for increment validation (defaults to max(0, min))
+- `validation-timeout`: Debounce delay in ms before snapping to valid increment (default 500)
 
 **Formatting:**
 - `base`/`radix`: Number base (2-36)
@@ -71,13 +72,15 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 3. **Arrow Keys**: Up/down adjusts value by key-increment
 4. **Range Enforcement**: Min/max constraints prevent invalid values
 5. **Increment Validation**: Ensures values match valid-increment formula
+6. **Debounced Validation**: Increment constraints use configurable timeout (default 500ms) so users can type freely; values snap to nearest valid increment after typing stops
+7. **Precision Preservation**: Arrow key increments with integer steps preserve user-typed decimal places (e.g., 1.5 + 1 = 2.5, not 3)
 
 ## File Structure
 
 ```
 ├── public/
 │   ├── numeric-input.js        # Core library
-│   └── numeric-input.test.js   # Test suite (59 tests)
+│   └── numeric-input.test.js   # Test suite (68 tests)
 ├── client/
 │   ├── src/
 │   │   ├── components/
@@ -181,6 +184,8 @@ useEffect(() => {
 - ✅ Range constraint sign blocking
 - ✅ European format (comma decimal)
 - ✅ Paste filtering
+- ✅ Precision preservation (arrow key decimals)
+- ✅ Validation timeout (debounced increment snapping)
 
 ## Browser Compatibility
 - Chrome/Edge: ✅ Full support
@@ -195,7 +200,15 @@ useEffect(() => {
 - **Event Optimized**: Efficient keystroke filtering
 
 ## Recent Changes
-- **Major Bug Fix Release (Latest)**:
+- **Precision & Validation Update (Latest)**:
+  - Fixed precision preservation: Arrow key increments with integer steps now preserve user-typed decimal places (e.g., 1.5 + 1 = 2.5, not 3)
+  - Added `validation-timeout` attribute: Debounce delay in ms before snapping to valid increment (default 500ms)
+  - Added debounced increment validation: Users can type freely into fields with `valid-increment`; values snap to nearest valid increment after typing stops
+  - Split validation into `isValidRange` (immediate: sign/min/max) and `isValidIncrement` (deferred: increment check)
+  - Added `snapToIncrement` method for rounding to nearest valid increment value
+  - Timer cleanup on detach prevents memory leaks
+  - Test suite expanded from 59 to 68 tests across 16 suites
+- **Major Bug Fix Release**:
   - Fixed keyIncrement NaN default: `parseFloat(null)` now properly defaults to `validIncrement || 1`
   - Fixed floating-point precision: Added `roundToPrecision` helper for arrow key increments, tolerance-based modulo in `isValidValue`
   - Added `increment-start` attribute: Separate base for increment validation (defaults to `max(0, min)`)

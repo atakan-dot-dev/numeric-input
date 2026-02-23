@@ -29,7 +29,16 @@
         postfix: element.getAttribute('postfix') || '',
         locale: element.getAttribute('locale') || navigator.language,
         incrementStart: undefined,
+        validationTimeout: 500,
       };
+
+      const rawValidationTimeout = element.getAttribute('validation-timeout');
+      if (rawValidationTimeout !== null) {
+        config.validationTimeout = parseInt(rawValidationTimeout, 10);
+        if (isNaN(config.validationTimeout) || config.validationTimeout < 0) {
+          config.validationTimeout = 500;
+        }
+      }
 
       if (config.radix && element.getAttribute('base') !== null) {
         console.warn('Both base and radix attributes provided. Using radix.');
@@ -90,7 +99,7 @@
 
     roundToPrecision(value, increment) {
       const places = this.getDecimalPlaces(increment);
-      if (places === 0) return Math.round(value);
+      if (places === 0) return value;
       const factor = Math.pow(10, places);
       return Math.round(value * factor) / factor;
     },
@@ -285,6 +294,104 @@
       return true;
     },
 
+    isValidRange(value, config) {
+      if (value === '' || value === null || value === undefined) {
+        return true;
+      }
+
+      const numValue = typeof value === 'string' ? parseFloat(value) : value;
+
+      if (isNaN(numValue)) {
+        return false;
+      }
+
+      if (config.sign === 'positive' && numValue < 0) {
+        return false;
+      }
+      if (config.sign === 'negative' && numValue > 0) {
+        return false;
+      }
+
+      if (config.min !== undefined && numValue < config.min) {
+        return false;
+      }
+      if (config.max !== undefined && numValue > config.max) {
+        return false;
+      }
+
+      return true;
+    },
+
+    isValidIncrement(value, config) {
+      if (value === '' || value === null || value === undefined) {
+        return true;
+      }
+      if (config.validIncrement === 0) {
+        return true;
+      }
+
+      const numValue = typeof value === 'string' ? parseFloat(value) : value;
+      if (isNaN(numValue)) {
+        return false;
+      }
+
+      const base = config.incrementStart !== undefined ? config.incrementStart : (config.min ?? 0);
+      const offset = numValue - base;
+      const remainder = offset % config.validIncrement;
+      if (Math.abs(remainder) > 1e-10 && Math.abs(remainder - config.validIncrement) > 1e-10) {
+        return false;
+      }
+
+      return true;
+    },
+
+    snapToIncrement(value, config) {
+      if (config.validIncrement === 0) return value;
+
+      const numValue = typeof value === 'string' ? parseFloat(value) : value;
+      if (isNaN(numValue)) return value;
+
+      const base = config.incrementStart !== undefined ? config.incrementStart : (config.min ?? 0);
+      const offset = numValue - base;
+      const snapped = base + Math.round(offset / config.validIncrement) * config.validIncrement;
+
+      const result = this.roundToPrecision(snapped, config.validIncrement);
+
+      if (config.min !== undefined && result < config.min) {
+        return base + Math.ceil((config.min - base) / config.validIncrement) * config.validIncrement;
+      }
+      if (config.max !== undefined && result > config.max) {
+        return base + Math.floor((config.max - base) / config.validIncrement) * config.validIncrement;
+      }
+
+      return result;
+    },
+
+    _scheduleIncrementValidation(originalInput, displayInput, config, attachedData) {
+      if (attachedData._validationTimer) {
+        clearTimeout(attachedData._validationTimer);
+        attachedData._validationTimer = null;
+      }
+
+      if (config.validIncrement === 0 || config.validationTimeout <= 0) {
+        return;
+      }
+
+      attachedData._validationTimer = setTimeout(() => {
+        attachedData._validationTimer = null;
+        const currentParsed = this.parseValue(displayInput.value, config);
+        if (currentParsed === '' || isNaN(currentParsed)) return;
+
+        if (!this.isValidIncrement(currentParsed, config)) {
+          const snapped = this.snapToIncrement(currentParsed, config);
+          originalInput.value = String(snapped);
+          displayInput.value = this.formatValue(snapped, config);
+          displayInput.setAttribute('data-old-value', displayInput.value);
+          originalInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }, config.validationTimeout);
+    },
+
     getActiveDecimalSep(config) {
       if (config.decimal === 'locale') {
         return this.getDecimalSeparator(config.locale);
@@ -454,8 +561,12 @@
           const negDisplay = '-' + value;
           displayInput.value = negDisplay;
           displayInput.setAttribute('data-old-value', negDisplay);
-          if (this.isValidValue(parsed, config)) {
+          if (this.isValidRange(parsed, config)) {
             originalInput.value = String(parsed);
+            const attachedData = this._attached.get(originalInput);
+            if (attachedData && !this.isValidIncrement(parsed, config)) {
+              this._scheduleIncrementValidation(originalInput, displayInput, config, attachedData);
+            }
           }
           return;
         }
@@ -470,9 +581,13 @@
           return;
         }
 
-        if (parsed !== '' && !isNaN(parsed) && this.isValidValue(parsed, config)) {
+        if (parsed !== '' && !isNaN(parsed) && this.isValidRange(parsed, config)) {
           originalInput.value = String(parsed);
           displayInput.setAttribute('data-old-value', value);
+          const attachedData = this._attached.get(originalInput);
+          if (attachedData && !this.isValidIncrement(parsed, config)) {
+            this._scheduleIncrementValidation(originalInput, displayInput, config, attachedData);
+          }
         } else if (parsed !== '' && !isNaN(parsed)) {
           displayInput.value = oldValue;
           const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
@@ -510,7 +625,7 @@
       }
       
       if (parsed !== '' && !isNaN(parsed)) {
-        if (this.isValidValue(parsed, config)) {
+        if (this.isValidRange(parsed, config)) {
           originalInput.value = String(parsed);
           const formatted = this.formatValue(parsed, config);
           if (formatted !== value) {
@@ -520,6 +635,10 @@
             displayInput.setSelectionRange(newPos, newPos);
           }
           displayInput.setAttribute('data-old-value', displayInput.value);
+          const attachedData = this._attached.get(originalInput);
+          if (attachedData && !this.isValidIncrement(parsed, config)) {
+            this._scheduleIncrementValidation(originalInput, displayInput, config, attachedData);
+          }
         } else {
           displayInput.value = oldValue;
           const newPos = Math.max(0, Math.min(oldValue.length, cursorPos - 1));
@@ -598,6 +717,7 @@
           keydownHandler,
           inputHandler,
           pasteHandler,
+          _validationTimer: null,
         });
 
         displayInput.addEventListener('keydown', keydownHandler);
@@ -618,6 +738,11 @@
         if (!data) return;
 
         const { displayInput, keydownHandler, inputHandler, pasteHandler } = data;
+
+        if (data._validationTimer) {
+          clearTimeout(data._validationTimer);
+          data._validationTimer = null;
+        }
 
         displayInput.removeEventListener('keydown', keydownHandler);
         displayInput.removeEventListener('input', inputHandler);

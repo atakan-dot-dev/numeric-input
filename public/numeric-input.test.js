@@ -836,6 +836,108 @@ TestRunner.suite('European Format Tests', () => {
   });
 });
 
+// ============================================================================
+// PRECISION PRESERVATION TESTS
+// ============================================================================
+
+TestRunner.suite('Precision Preservation Tests', () => {
+  TestRunner.test('Arrow increment preserves typed decimal places', () => {
+    const originalInput = createMockInput({ 'key-increment': '1' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '1.5';
+    displayInput.setAttribute('data-old-value', '1.5');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '2.5', 'Should preserve decimal: 1.5 + 1 = 2.5, not 3');
+  });
+
+  TestRunner.test('Arrow increment still fixes FP drift for decimal increments', () => {
+    const originalInput = createMockInput({ 'key-increment': '0.01', 'valid-increment': '0.01' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '4.01';
+    displayInput.setAttribute('data-old-value', '4.01');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '4.02', 'Should still fix FP drift: 4.01 + 0.01 = 4.02');
+  });
+
+  TestRunner.test('Arrow decrement preserves typed decimal places', () => {
+    const originalInput = createMockInput({ 'key-increment': '1' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '5.7';
+    displayInput.setAttribute('data-old-value', '5.7');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowDown'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '4.7', 'Should preserve decimal: 5.7 - 1 = 4.7, not 5');
+  });
+});
+
+// ============================================================================
+// VALIDATION TIMEOUT TESTS
+// ============================================================================
+
+TestRunner.suite('Validation Timeout Tests', () => {
+  TestRunner.test('snapToIncrement rounds to nearest valid value', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 
+      'valid-increment': '5',
+      'increment-start': '0'
+    }));
+    assertEqual(NumericInput.snapToIncrement(12, config), 10, '12 should snap to 10');
+    assertEqual(NumericInput.snapToIncrement(13, config), 15, '13 should snap to 15');
+    assertEqual(NumericInput.snapToIncrement(0, config), 0, '0 should snap to 0');
+    assertEqual(NumericInput.snapToIncrement(7.5, config), 10, '7.5 should snap to 10');
+  });
+
+  TestRunner.test('isValidRange checks sign/min/max but not increment', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 
+      'valid-increment': '5',
+      'increment-start': '0',
+      min: '0',
+      max: '100'
+    }));
+    assert(NumericInput.isValidRange(12, config), '12 should pass range check even though not multiple of 5');
+    assert(NumericInput.isValidRange(0, config), '0 should pass range check');
+    assert(NumericInput.isValidRange(100, config), '100 should pass range check');
+    assert(!NumericInput.isValidRange(-1, config), '-1 should fail range check (below min)');
+    assert(!NumericInput.isValidRange(101, config), '101 should fail range check (above max)');
+  });
+
+  TestRunner.test('isValidIncrement checks only increment constraint', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 
+      'valid-increment': '5',
+      'increment-start': '0'
+    }));
+    assert(NumericInput.isValidIncrement(10, config), '10 should be valid increment');
+    assert(NumericInput.isValidIncrement(15, config), '15 should be valid increment');
+    assert(!NumericInput.isValidIncrement(12, config), '12 should not be valid increment');
+    assert(NumericInput.isValidIncrement(0, config), '0 should be valid increment');
+  });
+
+  TestRunner.test('validationTimeout defaults to 500', () => {
+    const config = NumericInput.parseConfig(createMockInput({}));
+    assertEqual(config.validationTimeout, 500, 'Should default validationTimeout to 500ms');
+  });
+
+  TestRunner.test('validationTimeout can be configured', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'validation-timeout': '1000' }));
+    assertEqual(config.validationTimeout, 1000, 'Should use configured validationTimeout');
+  });
+
+  TestRunner.test('snapToIncrement respects min/max bounds', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 
+      'valid-increment': '10',
+      'increment-start': '0',
+      min: '5',
+      max: '95'
+    }));
+    const snapped = NumericInput.snapToIncrement(2, config);
+    assert(snapped >= 5, 'Snapped value should not be below min');
+  });
+});
+
 // Export for use in browser and Node
 if (typeof window !== 'undefined') {
   window.TestRunner = TestRunner;
