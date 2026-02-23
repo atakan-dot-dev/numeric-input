@@ -35,6 +35,7 @@ export const numericInputConfigSchema = z.object({
   prefix: z.string().optional(),
   postfix: z.string().optional(),
   locale: z.string().optional(),
+  incrementStart: z.number().optional(),
 });
 
 export type NumericInputConfig = z.infer<typeof numericInputConfigSchema>;

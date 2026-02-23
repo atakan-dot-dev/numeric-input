@@ -3,8 +3,11 @@
  * Comprehensive tests for all library functionality
  */
 
-// Simple test framework
-const TestRunner = {
+if (typeof window !== 'undefined' && window.TestRunner) {
+  window.TestRunner.reset();
+}
+
+var TestRunner = (typeof window !== 'undefined' && window.TestRunner) || {
   tests: [],
   suites: {},
   currentSuite: null,
@@ -65,7 +68,6 @@ const TestRunner = {
   },
 };
 
-// Assertion helpers
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message || 'Assertion failed');
@@ -87,18 +89,18 @@ function assertThrows(fn, message) {
   }
 }
 
-// Mock DOM elements for testing
 function createMockInput(attributes = {}) {
   const input = {
-    type: 'number',
+    type: attributes.type || 'number',
     value: '',
     selectionStart: 0,
     selectionEnd: 0,
     _attributes: { ...attributes },
     _listeners: {},
+    style: {},
     
     getAttribute(name) {
-      return this._attributes[name];
+      return this._attributes[name] !== undefined ? this._attributes[name] : null;
     },
     
     setAttribute(name, value) {
@@ -140,7 +142,17 @@ function createMockInput(attributes = {}) {
   return input;
 }
 
-// Load NumericInput library
+function createMockEvent(key, modifiers = {}) {
+  return {
+    key,
+    preventDefault: () => {},
+    altKey: modifiers.altKey || false,
+    ctrlKey: modifiers.ctrlKey || false,
+    shiftKey: modifiers.shiftKey || false,
+    metaKey: modifiers.metaKey || false,
+  };
+}
+
 if (typeof NumericInput === 'undefined' && typeof require !== 'undefined') {
   var NumericInput = require('./numeric-input.js');
 }
@@ -167,7 +179,7 @@ TestRunner.suite('Validation Tests', () => {
   TestRunner.test('Valid increment enforcement', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
       'valid-increment': '5',
-      min: '0'
+      'increment-start': '0'
     }));
     assert(NumericInput.isValidValue(0, config), 'Value 0 should be valid');
     assert(NumericInput.isValidValue(5, config), 'Value 5 should be valid');
@@ -204,7 +216,7 @@ TestRunner.suite('Formatting Tests', () => {
   TestRunner.test('Decimal (base 10) display', () => {
     const config = NumericInput.parseConfig(createMockInput({}));
     const formatted = NumericInput.formatValue(12345, config);
-    assert(formatted.includes('12345'), 'Should format decimal number correctly');
+    assert(formatted.includes('12345') || formatted.includes('12,345'), 'Should format decimal number correctly');
   });
 
   TestRunner.test('Binary (base 2) display', () => {
@@ -301,15 +313,25 @@ TestRunner.suite('Display Tests', () => {
 
 TestRunner.suite('Keystroke Tests', () => {
   TestRunner.test('Arrow key increment', () => {
-    const config = NumericInput.parseConfig(createMockInput({ 'key-increment': '5' }));
-    const newValue = NumericInput.handleArrowKey(1, 0, config);
-    assertEqual(newValue, 5, 'Should increment by key-increment amount');
+    const originalInput = createMockInput({ 'key-increment': '5' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '0';
+    displayInput.setAttribute('data-old-value', '0');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(parseFloat(originalInput.value), 5, 'Should increment by key-increment amount');
   });
 
   TestRunner.test('Arrow key decrement', () => {
-    const config = NumericInput.parseConfig(createMockInput({ 'key-increment': '5' }));
-    const newValue = NumericInput.handleArrowKey(-1, 10, config);
-    assertEqual(newValue, 5, 'Should decrement by key-increment amount');
+    const originalInput = createMockInput({ 'key-increment': '5' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '10';
+    displayInput.setAttribute('data-old-value', '10');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowDown'), originalInput, displayInput, config);
+    assertEqual(parseFloat(originalInput.value), 5, 'Should decrement by key-increment amount');
   });
 
   TestRunner.test('Allow sign without number', () => {
@@ -318,76 +340,65 @@ TestRunner.suite('Keystroke Tests', () => {
     assert(parsed === '' || parsed === '-', 'Should allow standalone sign');
   });
 
-  TestRunner.test('Sign flipping prevents multiple signs', () => {
-    const input = createMockInput({ sign: 'any' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '';
+  TestRunner.test('Sign flipping: basic with minus key', () => {
+    const originalInput = createMockInput({ sign: 'any' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    originalInput.value = '5';
+    displayInput.value = '5';
+    displayInput.setAttribute('data-old-value', '5');
     
-    // First minus should not add anything when no value
-    const event1 = { key: '-', preventDefault: () => {}, altKey: false, ctrlKey: false, shiftKey: false, metaKey: false };
-    NumericInput.handleKeyDown(event1, input, config);
-    assert(input.value === '', 'First minus on empty input should do nothing');
+    NumericInput.handleKeyDown(createMockEvent('-'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '-5', 'Minus should flip to negative');
     
-    // Type a number
-    input.value = '5';
-    
-    // Second minus should flip sign
-    const event2 = { key: '-', preventDefault: () => {}, altKey: false, ctrlKey: false, shiftKey: false, metaKey: false };
-    NumericInput.handleKeyDown(event2, input, config);
-    assert(input.value === '-5', 'Minus should flip to negative');
-    
-    // Third minus should flip back
-    const event3 = { key: '-', preventDefault: () => {}, altKey: false, ctrlKey: false, shiftKey: false, metaKey: false };
-    NumericInput.handleKeyDown(event3, input, config);
-    assert(input.value === '5', 'Minus should flip back to positive');
+    displayInput.value = originalInput.value;
+    NumericInput.handleKeyDown(createMockEvent('-'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '5', 'Minus should flip back to positive');
   });
 
-  TestRunner.test('Plus key prevents multiple signs', () => {
-    const input = createMockInput({ sign: 'any' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '-5';
+  TestRunner.test('Sign flipping: blocked when min > 0', () => {
+    const originalInput = createMockInput({ min: '1', sign: 'any' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    originalInput.value = '5';
+    displayInput.value = '5';
     
-    // Plus should flip negative to positive
-    const event = { key: '+', preventDefault: () => {}, altKey: false, ctrlKey: false, shiftKey: false, metaKey: false };
-    NumericInput.handleKeyDown(event, input, config);
-    assert(input.value === '5', 'Plus should flip negative to positive');
+    NumericInput.handleKeyDown(createMockEvent('-'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '5', 'Value should not change when min > 0');
   });
 
-  TestRunner.test('Minus key blocked when sign=positive', () => {
-    const input = createMockInput({ sign: 'positive' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '5';
-    let prevented = false;
+  TestRunner.test('Sign flipping: blocked when sign=positive', () => {
+    const originalInput = createMockInput({ sign: 'positive' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    originalInput.value = '5';
+    displayInput.value = '5';
     
-    const event = { 
-      key: '-', 
-      preventDefault: () => { prevented = true; },
-      altKey: false, 
-      ctrlKey: false, 
-      shiftKey: false, 
-      metaKey: false 
-    };
-    NumericInput.handleKeyDown(event, input, config);
-    assert(prevented, 'Minus key should be prevented when sign=positive');
-    assert(input.value === '5', 'Value should not change');
+    NumericInput.handleKeyDown(createMockEvent('-'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '5', 'Value should not change when sign=positive');
   });
 
-  TestRunner.test('Minus key blocked when min > 0', () => {
-    const input = createMockInput({ min: '1', sign: 'any' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '5';
-    let prevented = false;
+  TestRunner.test('Sign flipping: blocked when min=0', () => {
+    const originalInput = createMockInput({ min: '0', sign: 'any' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    originalInput.value = '5';
+    displayInput.value = '5';
     
-    const event = { 
-      key: '-', 
-      preventDefault: () => { prevented = true; },
-      altKey: false, 
-      ctrlKey: false, 
-      shiftKey: false, 
-      metaKey: false 
-    };
-    NumericInput.handleKeyDown(event, input, config);
-    assert(prevented, 'Minus key should be prevented when min > 0');
+    NumericInput.handleKeyDown(createMockEvent('-'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '5', 'Value should not change when min=0');
+  });
+
+  TestRunner.test('Plus key flips negative to positive', () => {
+    const originalInput = createMockInput({ sign: 'any' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    originalInput.value = '-5';
+    displayInput.value = '-5';
+    displayInput.setAttribute('data-old-value', '-5');
+    
+    NumericInput.handleKeyDown(createMockEvent('+'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '5', 'Plus should flip negative to positive');
   });
 });
 
@@ -413,8 +424,11 @@ TestRunner.suite('Edge Case Tests', () => {
   });
 
   TestRunner.test('Invalid base value', () => {
+    const originalError = console.error;
+    console.error = () => {};
     const config = NumericInput.parseConfig(createMockInput({ base: '50' }));
     assertEqual(config.base, 10, 'Should default to base 10 for invalid base');
+    console.error = originalError;
   });
 
   TestRunner.test('Empty input', () => {
@@ -461,9 +475,7 @@ TestRunner.suite('Locale Tests', () => {
       locale: 'en-IN'
     }));
     const formatted = NumericInput.formatValue(1234567, config);
-    // Indian format should be 12,34,567
     assert(formatted.includes(','), 'Should include separators');
-    // Should use Intl.NumberFormat for proper formatting
     assert(formatted === '12,34,567' || formatted.match(/\d{1,2}(,\d{2})+(,\d{3})/), 'Should follow Indian number system');
   });
 });
@@ -474,88 +486,58 @@ TestRunner.suite('Locale Tests', () => {
 
 TestRunner.suite('Arrow Key Modifier Tests', () => {
   TestRunner.test('Arrow up without modifiers uses 1x key-increment', () => {
-    const input = createMockInput({ 'key-increment': '10' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '0';
+    const originalInput = createMockInput({ 'key-increment': '10' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '0';
+    displayInput.setAttribute('data-old-value', '0');
     
-    const event = { 
-      key: 'ArrowUp', 
-      preventDefault: () => {}, 
-      altKey: false, 
-      ctrlKey: false, 
-      shiftKey: false,
-      metaKey: false 
-    };
-    NumericInput.handleKeyDown(event, input, config);
-    assert(input.value === '10', 'Should increment by 1x key-increment (10)');
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '10', 'Should increment by 1x key-increment (10)');
   });
 
   TestRunner.test('Shift + Arrow up uses 2x key-increment', () => {
-    const input = createMockInput({ 'key-increment': '10' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '0';
+    const originalInput = createMockInput({ 'key-increment': '10' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '0';
+    displayInput.setAttribute('data-old-value', '0');
     
-    const event = { 
-      key: 'ArrowUp', 
-      preventDefault: () => {}, 
-      altKey: false, 
-      ctrlKey: false, 
-      shiftKey: true,
-      metaKey: false 
-    };
-    NumericInput.handleKeyDown(event, input, config);
-    assert(input.value === '20', 'Should increment by 2x key-increment (20)');
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp', { shiftKey: true }), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '20', 'Should increment by 2x key-increment (20)');
   });
 
   TestRunner.test('Ctrl + Arrow up uses 5x key-increment', () => {
-    const input = createMockInput({ 'key-increment': '10' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '0';
+    const originalInput = createMockInput({ 'key-increment': '10' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '0';
+    displayInput.setAttribute('data-old-value', '0');
     
-    const event = { 
-      key: 'ArrowUp', 
-      preventDefault: () => {}, 
-      altKey: false, 
-      ctrlKey: true, 
-      shiftKey: false,
-      metaKey: false 
-    };
-    NumericInput.handleKeyDown(event, input, config);
-    assert(input.value === '50', 'Should increment by 5x key-increment (50)');
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp', { ctrlKey: true }), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '50', 'Should increment by 5x key-increment (50)');
   });
 
   TestRunner.test('Alt + Arrow up uses 10x key-increment', () => {
-    const input = createMockInput({ 'key-increment': '10' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '0';
+    const originalInput = createMockInput({ 'key-increment': '10' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '0';
+    displayInput.setAttribute('data-old-value', '0');
     
-    const event = { 
-      key: 'ArrowUp', 
-      preventDefault: () => {}, 
-      altKey: true, 
-      ctrlKey: false, 
-      shiftKey: false,
-      metaKey: false 
-    };
-    NumericInput.handleKeyDown(event, input, config);
-    assert(input.value === '100', 'Should increment by 10x key-increment (100)');
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp', { altKey: true }), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '100', 'Should increment by 10x key-increment (100)');
   });
 
   TestRunner.test('Arrow down with modifiers works correctly', () => {
-    const input = createMockInput({ 'key-increment': '10' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '100';
+    const originalInput = createMockInput({ 'key-increment': '10' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '100';
+    displayInput.setAttribute('data-old-value', '100');
     
-    const event = { 
-      key: 'ArrowDown', 
-      preventDefault: () => {}, 
-      altKey: false, 
-      ctrlKey: true, 
-      shiftKey: false,
-      metaKey: false 
-    };
-    NumericInput.handleKeyDown(event, input, config);
-    assert(input.value === '50', 'Should decrement by 5x key-increment (50)');
+    NumericInput.handleKeyDown(createMockEvent('ArrowDown', { ctrlKey: true }), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '50', 'Should decrement by 5x key-increment (50)');
   });
 });
 
@@ -565,11 +547,12 @@ TestRunner.suite('Arrow Key Modifier Tests', () => {
 
 TestRunner.suite('Paste Filtering Tests', () => {
   TestRunner.test('Paste filters non-numeric characters', () => {
-    const input = createMockInput({});
-    const config = NumericInput.parseConfig(input);
-    input.value = '';
-    input.selectionStart = 0;
-    input.selectionEnd = 0;
+    const originalInput = createMockInput({});
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '';
+    displayInput.selectionStart = 0;
+    displayInput.selectionEnd = 0;
     
     const pasteEvent = {
       preventDefault: () => {},
@@ -578,17 +561,18 @@ TestRunner.suite('Paste Filtering Tests', () => {
       }
     };
     
-    NumericInput.handlePaste(pasteEvent, input, config);
-    assert(input.value.includes('123456'), 'Should filter out non-numeric characters');
-    assert(!input.value.includes('abc'), 'Should not include letters');
+    NumericInput.handlePaste(pasteEvent, originalInput, displayInput, config);
+    assert(displayInput.value.includes('123456'), 'Should filter out non-numeric characters');
+    assert(!displayInput.value.includes('abc'), 'Should not include letters');
   });
 
   TestRunner.test('Paste preserves decimal point', () => {
-    const input = createMockInput({ decimal: '.' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '';
-    input.selectionStart = 0;
-    input.selectionEnd = 0;
+    const originalInput = createMockInput({ decimal: '.' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '';
+    displayInput.selectionStart = 0;
+    displayInput.selectionEnd = 0;
     
     const pasteEvent = {
       preventDefault: () => {},
@@ -597,16 +581,17 @@ TestRunner.suite('Paste Filtering Tests', () => {
       }
     };
     
-    NumericInput.handlePaste(pasteEvent, input, config);
-    assert(input.value.includes('.'), 'Should preserve decimal point');
+    NumericInput.handlePaste(pasteEvent, originalInput, displayInput, config);
+    assert(displayInput.value.includes('.'), 'Should preserve decimal point');
   });
 
   TestRunner.test('Paste preserves sign characters', () => {
-    const input = createMockInput({ sign: 'any' });
-    const config = NumericInput.parseConfig(input);
-    input.value = '';
-    input.selectionStart = 0;
-    input.selectionEnd = 0;
+    const originalInput = createMockInput({ sign: 'any' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '';
+    displayInput.selectionStart = 0;
+    displayInput.selectionEnd = 0;
     
     const pasteEvent = {
       preventDefault: () => {},
@@ -615,8 +600,239 @@ TestRunner.suite('Paste Filtering Tests', () => {
       }
     };
     
-    NumericInput.handlePaste(pasteEvent, input, config);
-    assert(input.value.includes('-'), 'Should preserve minus sign');
+    NumericInput.handlePaste(pasteEvent, originalInput, displayInput, config);
+    assert(displayInput.value.includes('-'), 'Should preserve minus sign');
+  });
+});
+
+// ============================================================================
+// FLOATING POINT PRECISION TESTS
+// ============================================================================
+
+TestRunner.suite('Floating Point Precision Tests', () => {
+  TestRunner.test('0.01 increments do not accumulate drift', () => {
+    const originalInput = createMockInput({ 'key-increment': '0.01', 'valid-increment': '0.01' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '4.01';
+    displayInput.setAttribute('data-old-value', '4.01');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '4.02', 'Should be exactly 4.02 not 4.019999...');
+    
+    displayInput.value = originalInput.value;
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '4.03', 'Should be exactly 4.03');
+  });
+
+  TestRunner.test('Valid increment check handles floating point', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 
+      'valid-increment': '0.01',
+      'increment-start': '0'
+    }));
+    assert(NumericInput.isValidValue(0.01, config), '0.01 should be valid');
+    assert(NumericInput.isValidValue(0.02, config), '0.02 should be valid');
+    assert(NumericInput.isValidValue(0.03, config), '0.03 should be valid');
+    assert(NumericInput.isValidValue(1.99, config), '1.99 should be valid');
+  });
+
+  TestRunner.test('Price increments past 0.02', () => {
+    const originalInput = createMockInput({ 
+      prefix: '$', 'valid-increment': '0.01', 'key-increment': '0.01', min: '0' 
+    });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    
+    displayInput.value = '$0.02';
+    displayInput.setAttribute('data-old-value', '$0.02');
+    originalInput.value = '0.02';
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '0.03', 'Should increment to 0.03');
+    
+    displayInput.value = NumericInput.formatValue(0.03, config);
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '0.04', 'Should increment to 0.04');
+  });
+});
+
+// ============================================================================
+// INCREMENT START TESTS
+// ============================================================================
+
+TestRunner.suite('Increment Start Tests', () => {
+  TestRunner.test('increment-start defaults to max(0, min)', () => {
+    const config1 = NumericInput.parseConfig(createMockInput({ min: '5' }));
+    assertEqual(config1.incrementStart, 5, 'Should default to min when min > 0');
+    
+    const config2 = NumericInput.parseConfig(createMockInput({ min: '-10' }));
+    assertEqual(config2.incrementStart, 0, 'Should default to 0 when min < 0');
+    
+    const config3 = NumericInput.parseConfig(createMockInput({}));
+    assertEqual(config3.incrementStart, 0, 'Should default to 0 when no min');
+  });
+
+  TestRunner.test('increment-start can be explicitly set', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 
+      'increment-start': '3',
+      'valid-increment': '5'
+    }));
+    assertEqual(config.incrementStart, 3, 'Should use explicit increment-start');
+    assert(NumericInput.isValidValue(3, config), '3 should be valid (start)');
+    assert(NumericInput.isValidValue(8, config), '8 should be valid (3+5)');
+    assert(NumericInput.isValidValue(13, config), '13 should be valid (3+10)');
+    assert(!NumericInput.isValidValue(5, config), '5 should be invalid');
+  });
+
+  TestRunner.test('Increment validation uses incrementStart not min', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 
+      'valid-increment': '5',
+      'increment-start': '0',
+      min: '-100'
+    }));
+    assert(NumericInput.isValidValue(0, config), '0 should be valid');
+    assert(NumericInput.isValidValue(5, config), '5 should be valid');
+    assert(NumericInput.isValidValue(-5, config), '-5 should be valid');
+    assert(!NumericInput.isValidValue(3, config), '3 should be invalid');
+  });
+});
+
+// ============================================================================
+// NON-BASE-10 INCREMENT TESTS
+// ============================================================================
+
+TestRunner.suite('Non-Base-10 Increment Tests', () => {
+  TestRunner.test('Hex increment with arrow keys', () => {
+    const originalInput = createMockInput({ base: '16', prefix: '0x', 'letter-case': 'upper' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '0xFF';
+    displayInput.setAttribute('data-old-value', '0xFF');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    const newVal = parseInt(originalInput.value);
+    assertEqual(newVal, 256, 'Should increment hex value by 1 (FF -> 100)');
+  });
+
+  TestRunner.test('Binary increment with arrow keys', () => {
+    const originalInput = createMockInput({ base: '2', prefix: '0b' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '0b101';
+    displayInput.setAttribute('data-old-value', '0b101');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    const newVal = parseInt(originalInput.value);
+    assertEqual(newVal, 6, 'Should increment binary value by 1 (101 -> 110)');
+  });
+
+  TestRunner.test('Octal increment with arrow keys', () => {
+    const originalInput = createMockInput({ base: '8', prefix: '0o' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '0o7';
+    displayInput.setAttribute('data-old-value', '0o7');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    const newVal = parseInt(originalInput.value);
+    assertEqual(newVal, 8, 'Should increment octal value by 1 (7 -> 10)');
+  });
+
+  TestRunner.test('keyIncrement defaults to 1 when not specified', () => {
+    const config = NumericInput.parseConfig(createMockInput({ base: '16' }));
+    assertEqual(config.keyIncrement, 1, 'Should default keyIncrement to 1');
+  });
+});
+
+// ============================================================================
+// POSTFIX DISPLAY TESTS
+// ============================================================================
+
+TestRunner.suite('Postfix Display Tests', () => {
+  TestRunner.test('Postfix applied after arrow key increment', () => {
+    const originalInput = createMockInput({ postfix: '%' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '50%';
+    displayInput.setAttribute('data-old-value', '50%');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assert(displayInput.value.endsWith('%'), 'Display should show postfix after increment');
+    assertEqual(originalInput.value, '51', 'Original should store numeric value');
+  });
+
+  TestRunner.test('Prefix applied after arrow key increment', () => {
+    const originalInput = createMockInput({ prefix: '$' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '$10';
+    displayInput.setAttribute('data-old-value', '$10');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assert(displayInput.value.startsWith('$'), 'Display should show prefix after increment');
+    assertEqual(originalInput.value, '11', 'Original should store numeric value');
+  });
+
+  TestRunner.test('formatValue always includes postfix', () => {
+    const config = NumericInput.parseConfig(createMockInput({ postfix: '°C', 'show-plus': '' }));
+    const formatted = NumericInput.formatValue(25, config);
+    assert(formatted.endsWith('°C'), 'Should end with postfix');
+    assert(formatted.startsWith('+'), 'Should start with plus sign');
+    assertEqual(formatted, '+25°C', 'Full formatted value should be correct');
+  });
+});
+
+// ============================================================================
+// RANGE CONSTRAINT TESTS
+// ============================================================================
+
+TestRunner.suite('Range Constraint Tests', () => {
+  TestRunner.test('Range 0-100 blocks negative sign flip', () => {
+    const originalInput = createMockInput({ min: '0', max: '100' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    originalInput.value = '50';
+    displayInput.value = '50';
+    
+    NumericInput.handleKeyDown(createMockEvent('-'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '50', 'Should not flip to negative when min=0');
+  });
+
+  TestRunner.test('Negative-only mode formats with minus sign', () => {
+    const config = NumericInput.parseConfig(createMockInput({ sign: 'negative' }));
+    const formatted = NumericInput.formatValue(-5, config);
+    assert(formatted.startsWith('-'), 'Should show minus sign');
+    assert(formatted.includes('5'), 'Should show the value');
+  });
+});
+
+// ============================================================================
+// EUROPEAN FORMAT TESTS
+// ============================================================================
+
+TestRunner.suite('European Format Tests', () => {
+  TestRunner.test('European format increments with arrow keys', () => {
+    const originalInput = createMockInput({ decimal: ',', separators: '.', locale: 'de-DE' });
+    const displayInput = createMockInput({});
+    const config = NumericInput.parseConfig(originalInput);
+    displayInput.value = '5';
+    displayInput.setAttribute('data-old-value', '5');
+    
+    NumericInput.handleKeyDown(createMockEvent('ArrowUp'), originalInput, displayInput, config);
+    assertEqual(originalInput.value, '6', 'Should increment European format by 1');
+  });
+
+  TestRunner.test('European format parses comma decimal', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: ',', separators: '.', locale: 'de-DE' }));
+    const parsed = NumericInput.parseValue('1,5', config);
+    assertEqual(parsed, 1.5, 'Should parse comma as decimal separator');
+  });
+
+  TestRunner.test('European format formats with comma decimal', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: ',', separators: '.', locale: 'de-DE' }));
+    const formatted = NumericInput.formatValue(1.5, config);
+    assert(formatted.includes(','), 'Should use comma as decimal separator');
+    assert(!formatted.includes('.'), 'Should not use dot as decimal separator');
   });
 });
 

@@ -21,14 +21,14 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 - **Comprehensive Coverage**: Tests for all attributes and behaviors
 - **Simple Test Runner**: Custom lightweight test framework
 - **Browser Compatible**: Runs directly in the browser
-- **6 Test Suites**: Validation, Keystroke, Formatting, Display, Locale, Edge Cases
-- **30+ Test Cases**: Covering all functionality
+- **14 Test Suites**: Validation, Formatting, Display, Keystroke, Edge Cases, Locale, Arrow Key Modifiers, Paste Filtering, Floating Point Precision, Increment Start, Non-Base-10 Increments, Postfix Display, Range Constraints, European Format
+- **59 Test Cases**: Covering all functionality including bug regression tests
 
 ### Demo Application (React + TypeScript)
 - **Sidebar Navigation**: Easy access to all sections
 - **Dark/Light Mode**: Full theme support with toggle
 - **Attribute Reference**: Comprehensive documentation of all attributes
-- **Live Examples**: 12+ interactive examples with live preview
+- **Live Examples**: 20 interactive examples with live preview
 - **Integrated Test Runner**: Run and view test results in the UI
 - **Syntax Highlighting**: Code blocks with copy functionality
 
@@ -49,6 +49,7 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 - `integer`: Boolean for integer-only input
 - `sign`: Controls sign behavior (any, positive, negative)
 - `min`, `max`: Range constraints
+- `increment-start`: Base value for increment validation (defaults to max(0, min))
 
 **Formatting:**
 - `base`/`radix`: Number base (2-36)
@@ -76,7 +77,7 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 ```
 ├── public/
 │   ├── numeric-input.js        # Core library
-│   └── numeric-input.test.js   # Test suite (32 tests)
+│   └── numeric-input.test.js   # Test suite (59 tests)
 ├── client/
 │   ├── src/
 │   │   ├── components/
@@ -168,11 +169,18 @@ useEffect(() => {
 
 ### Test Coverage
 - ✅ Validation (min, max, increment, sign)
-- ✅ Keystroke handling (arrows, sign flip)
+- ✅ Keystroke handling (arrows, sign flip, modifiers)
 - ✅ Formatting (bases, separators, decimals)
 - ✅ Display (prefix, postfix, show-plus)
-- ✅ Locale support
+- ✅ Locale support (decimal/group separators)
 - ✅ Edge cases (conflicts, invalid values)
+- ✅ Floating point precision (0.01 increments)
+- ✅ Increment-start attribute
+- ✅ Non-base-10 increments (hex, binary, octal)
+- ✅ Postfix/prefix display during interaction
+- ✅ Range constraint sign blocking
+- ✅ European format (comma decimal)
+- ✅ Paste filtering
 
 ## Browser Compatibility
 - Chrome/Edge: ✅ Full support
@@ -187,28 +195,20 @@ useEffect(() => {
 - **Event Optimized**: Efficient keystroke filtering
 
 ## Recent Changes
-- **Configurable Examples (Latest)**: Added dynamic min/max controls on currency and percentage examples for testing edge cases and negative value validation
-  - ConfigurableExampleCard component with live min/max adjustment controls
-  - Detach/reattach mechanism to apply configuration changes instantly
-  - Dynamic code snippets reflecting current settings
-- **New Examples**: Expanded from 12 to 20 examples including:
-  - Negative numbers only (sign="negative")
-  - Temperature range with both positive and negative values
-  - Scientific precision (0.01 increments)
-  - Price with decimal places
-  - Base 36 (maximum alphanumeric base)
-  - European format (comma decimal)
-  - Any sign (unrestricted)
-- **Test Synchronization**: Fixed tests.ts to match actual test file (32 tests total)
-- **Sign Flipping Fix**: Minus key now properly blocked when `sign='positive'` or `min > 0`, preventing invalid negative values from being entered or flipped
-- Input type handling: Dynamically use `type="text"` for formatted inputs (prefix/postfix/separators/base≠10), `type="number"` for simple numeric inputs
-- Keystroke validation: Properly blocks decimal points in integer mode while allowing group separators
-- Cursor position management: Improved handling when formatting is applied during typing
-- Test suite expansion: Added 5 new test cases for sign flipping behavior
-- Initial implementation of core library with 32 comprehensive tests
-- Full demo application with 20 interactive examples
-- Dark/light theme support
-- Integrated test runner UI
+- **Major Bug Fix Release (Latest)**:
+  - Fixed keyIncrement NaN default: `parseFloat(null)` now properly defaults to `validIncrement || 1`
+  - Fixed floating-point precision: Added `roundToPrecision` helper for arrow key increments, tolerance-based modulo in `isValidValue`
+  - Added `increment-start` attribute: Separate base for increment validation (defaults to `max(0, min)`)
+  - Fixed sign handling: `min >= 0` now properly blocks negative sign flipping; `sign='negative'` auto-negates typed values
+  - Fixed decimal entry: Trailing decimals preserved during typing with `isTrailingDecimal` helper
+  - Fixed postfix display: Always shown via `formatValue`, cursor positioned before postfix
+  - Fixed European format: Dot group separators properly stripped in `parseValue`; reformatted `formatValue` to handle separator/decimal separately
+  - Fixed negative-only mode: Auto-negate for `sign='negative'` in `handleInput`; standalone minus entry on empty inputs
+  - Test suite expanded from 32 to 59 tests across 14 suites with full bug regression coverage
+  - All test names synchronized between test file and tests.ts for proper result mapping
+- **Configurable Examples**: Dynamic min/max controls on currency and percentage examples
+- **20 Examples**: Comprehensive collection covering all library features
+- Full demo application with sidebar navigation, dark/light theme, integrated test runner
 
 ## Known Limitations
 1. Non-base-10 decimal handling is simplified (integer part only)

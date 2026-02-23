@@ -30,8 +30,8 @@ export const examples: ExampleConfig[] = [
     title: 'Increments of 5',
     description: 'Only allows values that are multiples of 5',
     category: 'Validation',
-    config: { validIncrement: 5, keyIncrement: 5, min: 0 },
-    code: '<input type="number" valid-increment="5" key-increment="5" min="0" />',
+    config: { validIncrement: 5, keyIncrement: 5, incrementStart: 0 },
+    code: '<input type="number" valid-increment="5" key-increment="5" increment-start="0" />',
   },
   {
     id: 'positive-only',
@@ -112,8 +112,8 @@ export const examples: ExampleConfig[] = [
     title: 'Negative Numbers Only',
     description: 'Only allows negative values (sign="negative")',
     category: 'Validation',
-    config: { sign: 'negative', max: 0 },
-    code: '<input type="number" sign="negative" max="0" />',
+    config: { sign: 'negative', max: -1 },
+    code: '<input type="number" sign="negative" max="-1" />',
   },
   {
     id: 'temperature-range',
