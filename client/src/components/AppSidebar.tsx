@@ -1,4 +1,4 @@
-import { Home, Book, Code2, TestTube2, Settings, Github } from 'lucide-react';
+import { Home, Book, Code2, TestTube2, Settings, Github, Blocks } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +28,11 @@ const navigationItems = [
     title: 'Examples',
     icon: Code2,
     id: 'examples',
+  },
+  {
+    title: 'Framework Bindings',
+    icon: Blocks,
+    id: 'framework-bindings',
   },
   {
     title: 'Tests',
@@ -122,6 +127,15 @@ export function AppSidebar() {
                   data-testid="link-attr-locale"
                 >
                   <span>Locale</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => scrollToSection('attr-advanced')}
+                  className="text-sm"
+                  data-testid="link-attr-advanced"
+                >
+                  <span>Advanced</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

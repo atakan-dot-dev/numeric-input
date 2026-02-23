@@ -37,6 +37,9 @@ export const numericInputConfigSchema = z.object({
   locale: z.string().optional(),
   incrementStart: z.number().optional(),
   validationTimeout: z.number().optional(),
+  valueAlgebra: z.string().optional(),
+  percentage: z.boolean().optional(),
+  percentagePrefix: z.boolean().optional(),
 });
 
 export type NumericInputConfig = z.infer<typeof numericInputConfigSchema>;
@@ -64,6 +67,30 @@ export const testSuiteSchema = z.object({
 
 export type TestSuite = z.infer<typeof testSuiteSchema>;
 
+// Example Control Types
+export const exampleControlSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('select'),
+    key: z.string(),
+    label: z.string(),
+    options: z.array(z.object({ label: z.string(), value: z.string() })),
+  }),
+  z.object({
+    type: z.literal('input'),
+    key: z.string(),
+    label: z.string(),
+    inputType: z.enum(['text', 'number']).default('text'),
+    placeholder: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('toggle'),
+    key: z.string(),
+    label: z.string(),
+  }),
+]);
+
+export type ExampleControl = z.infer<typeof exampleControlSchema>;
+
 // Example Configuration Schema
 export const exampleConfigSchema = z.object({
   id: z.string(),
@@ -71,8 +98,9 @@ export const exampleConfigSchema = z.object({
   description: z.string(),
   category: z.string(),
   config: numericInputConfigSchema,
-  code: z.string(),
+  code: z.string().optional(),
   configurable: z.boolean().optional(),
+  controls: z.array(exampleControlSchema).optional(),
 });
 
 export type ExampleConfig = z.infer<typeof exampleConfigSchema>;

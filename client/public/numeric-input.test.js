@@ -938,6 +938,141 @@ TestRunner.suite('Validation Timeout Tests', () => {
   });
 });
 
+// ============================================================================
+// VALUE ALGEBRA TESTS
+// ============================================================================
+
+TestRunner.suite('Value Algebra Tests', () => {
+  TestRunner.test('Basic multiplication: x*0.01', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'x*0.01' }));
+    assert(config.valueAlgebra !== null, 'Should parse x*0.01');
+    const result = NumericInput.applyAlgebra(50, config);
+    assertEqual(result, 0.5, 'x*0.01 with display 50 should store 0.5');
+  });
+
+  TestRunner.test('Basic subtraction: x-1', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'x-1' }));
+    assert(config.valueAlgebra !== null, 'Should parse x-1');
+    const result = NumericInput.applyAlgebra(5, config);
+    assertEqual(result, 4, 'x-1 with display 5 should store 4');
+  });
+
+  TestRunner.test('Complex expression with function: ceil(x/100)', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'ceil(x/100)' }));
+    assert(config.valueAlgebra !== null, 'Should parse ceil(x/100)');
+    const result = NumericInput.applyAlgebra(250, config);
+    assertEqual(result, 3, 'ceil(250/100) should store 3');
+  });
+
+  TestRunner.test('Nested parentheses: (x+1)*(x-1)', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': '(x+1)*(x-1)' }));
+    assert(config.valueAlgebra !== null, 'Should parse (x+1)*(x-1)');
+    const result = NumericInput.applyAlgebra(5, config);
+    assertEqual(result, 24, '(5+1)*(5-1) = 6*4 = 24');
+  });
+
+  TestRunner.test('Parenthesized grouping order: (x+10)/2', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': '(x+10)/2' }));
+    assert(config.valueAlgebra !== null, 'Should parse (x+10)/2');
+    const result = NumericInput.applyAlgebra(20, config);
+    assertEqual(result, 15, '(20+10)/2 = 15');
+  });
+
+  TestRunner.test('Floor function: floor(x/3)', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'floor(x/3)' }));
+    assert(config.valueAlgebra !== null, 'Should parse floor(x/3)');
+    const result = NumericInput.applyAlgebra(10, config);
+    assertEqual(result, 3, 'floor(10/3) = 3');
+  });
+
+  TestRunner.test('Round function: round(x*0.1)', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'round(x*0.1)' }));
+    assert(config.valueAlgebra !== null, 'Should parse round(x*0.1)');
+    const result = NumericInput.applyAlgebra(15, config);
+    assertEqual(result, 2, 'round(15*0.1) = round(1.5) = 2');
+  });
+
+  TestRunner.test('Max operations boundary: exactly 5 operations accepted', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'ceil(5*(x+1)/100)-0.1' }));
+    assert(config.valueAlgebra !== null, 'Expression with exactly 5 operations (ceil, *, +, /, -) should be accepted');
+  });
+
+  TestRunner.test('Operation count exceeded: 6 operations rejected', () => {
+    const originalError = console.error;
+    const errors = [];
+    console.error = (msg) => errors.push(msg);
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'ceil(5*(x+1)/100)-0.1+2' }));
+    assertEqual(config.valueAlgebra, null, 'Expression with 6 operations should be rejected');
+    console.error = originalError;
+  });
+
+  TestRunner.test('Expression length limit: 101 chars rejected', () => {
+    const originalError = console.error;
+    const errors = [];
+    console.error = (msg) => errors.push(msg);
+    const longExpr = 'x' + '+1'.repeat(50);
+    assert(longExpr.length > 100, 'Test expression should exceed 100 chars');
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': longExpr }));
+    assertEqual(config.valueAlgebra, null, 'Expression exceeding 100 chars should be rejected');
+    console.error = originalError;
+  });
+
+  TestRunner.test('Invalid expression syntax ignored without crash', () => {
+    const originalError = console.error;
+    console.error = () => {};
+    const config1 = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'x**2' }));
+    assertEqual(config1.valueAlgebra, null, 'x**2 should be rejected');
+    const config2 = NumericInput.parseConfig(createMockInput({ 'value-algebra': 'x;alert(1)' }));
+    assertEqual(config2.valueAlgebra, null, 'x;alert(1) should be rejected');
+    console.error = originalError;
+  });
+
+  TestRunner.test('Code injection attempt rejected', () => {
+    const originalError = console.error;
+    console.error = () => {};
+    const config = NumericInput.parseConfig(createMockInput({ 'value-algebra': "constructor.constructor('alert(1)')" }));
+    assertEqual(config.valueAlgebra, null, 'Code injection should be rejected');
+    console.error = originalError;
+  });
+
+  TestRunner.test('No algebra: config without value-algebra has no impact', () => {
+    const config = NumericInput.parseConfig(createMockInput({}));
+    assertEqual(config.valueAlgebra, null, 'Should have no valueAlgebra');
+    const result = NumericInput.applyAlgebra(42, config);
+    assertEqual(result, 42, 'Without algebra, value should pass through unchanged');
+  });
+});
+
+// ============================================================================
+// PERCENTAGE TESTS
+// ============================================================================
+
+TestRunner.suite('Percentage Tests', () => {
+  TestRunner.test('percentage attribute sets postfix and valueAlgebra', () => {
+    const config = NumericInput.parseConfig(createMockInput({ percentage: '' }));
+    assertEqual(config.postfix, '%', 'Should set postfix to %');
+    assert(config.valueAlgebra !== null, 'Should set valueAlgebra');
+    const result = NumericInput.applyAlgebra(50, config);
+    assertEqual(result, 0.5, 'Should apply x*0.01 algebra');
+  });
+
+  TestRunner.test('percentage-prefix sets prefix and valueAlgebra', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'percentage-prefix': '' }));
+    assertEqual(config.prefix, '%', 'Should set prefix to %');
+    assert(config.valueAlgebra !== null, 'Should set valueAlgebra');
+    const result = NumericInput.applyAlgebra(50, config);
+    assertEqual(result, 0.5, 'Should apply x*0.01 algebra');
+  });
+
+  TestRunner.test('Explicit postfix overrides percentage default', () => {
+    const config = NumericInput.parseConfig(createMockInput({ percentage: '', postfix: ' pct' }));
+    assertEqual(config.postfix, ' pct', 'Explicit postfix should override percentage default');
+    assert(config.valueAlgebra !== null, 'Should still set valueAlgebra');
+    const result = NumericInput.applyAlgebra(50, config);
+    assertEqual(result, 0.5, 'Should still apply x*0.01 algebra');
+  });
+});
+
 // Export for use in browser and Node
 if (typeof window !== 'undefined') {
   window.TestRunner = TestRunner;

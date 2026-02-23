@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CodeBlock } from '@/components/CodeBlock';
-import { ExampleCard } from '@/components/ExampleCard';
-import { ConfigurableExampleCard } from '@/components/ConfigurableExampleCard';
+import { InteractiveExampleCard } from '@/components/InteractiveExampleCard';
 import { AttributeCard } from '@/components/AttributeCard';
 import { TestRunner } from '@/components/TestRunner';
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +12,12 @@ import {
   formattingAttributes,
   displayAttributes,
   localeAttributes,
+  advancedAttributes,
 } from '@/data/attributes';
 import { testSuites as initialTestSuites } from '@/data/tests';
-import { Terminal, Zap, Shield, Globe } from 'lucide-react';
+import { frameworkBindings } from '@/data/frameworkBindings';
+import { Terminal, Zap, Shield, Globe, Package, FileText } from 'lucide-react';
+import { SiReact, SiVuedotjs, SiAngular, SiSvelte, SiSolid, SiQwik, SiAstro } from 'react-icons/si';
 import { loadNumericInputScript } from '@/hooks/useNumericInput';
 import { useTestRunner } from '@/hooks/useTestRunner';
 
@@ -148,11 +150,12 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
         </div>
 
         <Tabs defaultValue="validation" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+          <TabsList className="flex flex-wrap gap-1 h-auto w-full lg:w-auto">
             <TabsTrigger value="validation" data-testid="tab-validation">Validation</TabsTrigger>
             <TabsTrigger value="formatting" data-testid="tab-formatting">Formatting</TabsTrigger>
             <TabsTrigger value="display" data-testid="tab-display">Display</TabsTrigger>
             <TabsTrigger value="locale" data-testid="tab-locale">Locale</TabsTrigger>
+            <TabsTrigger value="advanced" data-testid="tab-advanced">Advanced</TabsTrigger>
           </TabsList>
 
           <TabsContent value="validation" id="attr-validation" className="space-y-4">
@@ -186,6 +189,14 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
               ))}
             </div>
           </TabsContent>
+
+          <TabsContent value="advanced" id="attr-advanced" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              {advancedAttributes.map((attr) => (
+                <AttributeCard key={attr.name} attribute={attr} />
+              ))}
+            </div>
+          </TabsContent>
         </Tabs>
       </section>
 
@@ -200,13 +211,97 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
 
         <div className="grid lg:grid-cols-2 gap-6">
           {examples.map((example) => (
-            example.configurable ? (
-              <ConfigurableExampleCard key={example.id} example={example} scriptLoaded={scriptLoaded} />
-            ) : (
-              <ExampleCard key={example.id} example={example} scriptLoaded={scriptLoaded} />
-            )
+            <InteractiveExampleCard key={example.id} example={example} scriptLoaded={scriptLoaded} />
           ))}
         </div>
+      </section>
+
+      {/* Framework Bindings */}
+      <section id="framework-bindings" className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold">Framework Bindings</h2>
+          <p className="text-muted-foreground">
+            Ready-to-use bindings for popular frameworks. Copy the binding source into your project or use the inline snippets.
+          </p>
+        </div>
+
+        <Tabs defaultValue="react" className="space-y-4">
+          <TabsList className="flex flex-wrap gap-1 h-auto w-full lg:w-auto">
+            {frameworkBindings.map((fw) => {
+              const iconMap: Record<string, typeof SiReact> = {
+                react: SiReact,
+                vue: SiVuedotjs,
+                angular: SiAngular,
+                svelte: SiSvelte,
+                solid: SiSolid,
+                qwik: SiQwik,
+                astro: SiAstro,
+              };
+              const IconComponent = iconMap[fw.icon];
+              return (
+                <TabsTrigger key={fw.id} value={fw.id} data-testid={`tab-framework-${fw.id}`} className="gap-1.5">
+                  {IconComponent && <IconComponent className="w-3.5 h-3.5" />}
+                  <span>{fw.name}</span>
+                  {fw.type === 'package' ? (
+                    <Package className="w-3 h-3 text-muted-foreground" />
+                  ) : (
+                    <FileText className="w-3 h-3 text-muted-foreground" />
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
+          {frameworkBindings.map((fw) => (
+            <TabsContent key={fw.id} value={fw.id} className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-xl font-semibold">{fw.name}</h3>
+                <Badge variant={fw.type === 'package' ? 'default' : 'secondary'}>
+                  {fw.type === 'package' ? 'Package' : 'Docs Only'}
+                </Badge>
+              </div>
+
+              {fw.installInstructions && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Installation</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CodeBlock code={fw.installInstructions} language="bash" />
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Usage</CardTitle>
+                  <CardDescription>
+                    {fw.type === 'package'
+                      ? `Copy the ${fw.name} binding into your project and use it as shown below.`
+                      : `Integrate NumericInput.js with ${fw.name} using the snippet below.`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CodeBlock code={fw.usageCode} language="typescript" />
+                </CardContent>
+              </Card>
+
+              {fw.bindingSource && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Binding Source</CardTitle>
+                    <CardDescription>
+                      Full source code for the {fw.name} binding. Copy this file into your project.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <CodeBlock code={fw.bindingSource} language="typescript" />
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
       </section>
 
       {/* Tests */}

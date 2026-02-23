@@ -1,45 +1,53 @@
 # NumericInput.js - Advanced Numeric Input Library Demo
 
 ## Project Overview
-A comprehensive demo application showcasing NumericInput.js, a powerful, framework-agnostic JavaScript library for advanced numeric input handling. The library supports multiple number bases (2-36), locale-aware formatting, intelligent validation, and comprehensive keyboard interactions.
+A comprehensive demo application showcasing NumericInput.js, a powerful, framework-agnostic JavaScript library for advanced numeric input handling. The library supports multiple number bases (2-36), locale-aware formatting, intelligent validation, value-algebra transformations, and comprehensive keyboard interactions.
 
 ## Architecture
 
 ### Core Library (`public/numeric-input.js` and `client/public/numeric-input.js`)
 - **Vanilla JavaScript**: Framework-agnostic core that can integrate with any framework
 - **Dual-Input Architecture**: When attached, creates two inputs:
-  - **Original (Hidden)**: Stores raw numeric value (e.g., "1234", "-25") - gets "-numeric" suffix on ID
-  - **Display (Visible)**: Shows formatted value (e.g., "$1,234", "-25%") - keeps original ID
+  - **Original (Hidden)**: Stores raw numeric value (or algebra-transformed value) - gets "-numeric" suffix on ID
+  - **Display (Visible)**: Shows formatted value (e.g., "$1,234", "50%") - keeps original ID
 - **Attach/Detach API**: Simple methods to bind/unbind library to input elements
 - **Configuration System**: Parses attributes from HTML elements
 - **Event Handling**: Manages keydown, input, and paste events on display input
 - **Multi-Base Support**: Handles bases 2-36 with proper letter casing
 - **Locale Awareness**: Automatic formatting based on Intl API
 - **Smart Validation**: Prevents invalid keystrokes before they're entered
+- **Value Algebra**: Safe expression parser for transforming display values to stored values
 
 ### Test Suite (`public/numeric-input.test.js`)
 - **Comprehensive Coverage**: Tests for all attributes and behaviors
 - **Simple Test Runner**: Custom lightweight test framework
 - **Browser Compatible**: Runs directly in the browser
-- **16 Test Suites**: Validation, Formatting, Display, Keystroke, Edge Cases, Locale, Arrow Key Modifiers, Paste Filtering, Floating Point Precision, Increment Start, Non-Base-10 Increments, Postfix Display, Range Constraints, European Format, Precision Preservation, Validation Timeout
-- **68 Test Cases**: Covering all functionality including bug regression tests
+- **18 Test Suites**: Validation, Formatting, Display, Keystroke, Edge Cases, Locale, Arrow Key Modifiers, Paste Filtering, Floating Point Precision, Increment Start, Non-Base-10 Increments, Postfix Display, Range Constraints, European Format, Precision Preservation, Validation Timeout, Value Algebra, Percentage
+- **~84 Test Cases**: Covering all functionality including value-algebra and percentage tests
 
 ### Demo Application (React + TypeScript)
-- **Sidebar Navigation**: Easy access to all sections
+- **Sidebar Navigation**: Easy access to all sections including Framework Bindings
 - **Dark/Light Mode**: Full theme support with toggle
-- **Attribute Reference**: Comprehensive documentation of all attributes
-- **Live Examples**: 20 interactive examples with live preview
+- **Attribute Reference**: Comprehensive documentation with 5 tabs (Validation, Formatting, Display, Locale, Advanced)
+- **10 Interactive Examples**: Configurable controls (selects, inputs, toggles) for real-time attribute experimentation
+- **Framework Bindings**: Code examples for 7 frameworks (React, Vue, Angular, Svelte, Solid, Qwik, Astro)
 - **Integrated Test Runner**: Run and view test results in the UI
 - **Syntax Highlighting**: Code blocks with copy functionality
+
+### Framework Bindings (`public/bindings/`)
+- **React** (`react/useNumericInput.ts`): Hook using useEffect + useRef
+- **Vue** (`vue/useNumericInput.ts`): Composable using onMounted/onUnmounted + ref
+- **Angular** (`angular/numeric-input.directive.ts`): Directive using OnInit/OnDestroy + ElementRef
+- **Svelte, Solid, Qwik, Astro**: Documentation-only with inline code snippets
 
 ## Key Features
 
 ### Interactive Examples
-- **20 Examples**: Comprehensive collection covering all library features
-- **Configurable Examples**: Dynamic min/max controls on currency and percentage examples
-  - Adjust constraints in real-time to test negative values and sign flipping
-  - Perfect for testing edge cases and validation behavior
-- **Categories**: Basic, Validation, Formatting, Base, Display, Locale, Configurable
+- **10 Interactive Examples**: Each with configurable controls (selects, inputs, toggles)
+  - Basic Number, Range & Increments, Currency, Percentage, Number Base, Display Options, Locale & Format, Value Algebra, Precision, Full Config Playground
+- **Real-time Configuration**: Adjust any attribute and see behavior change instantly
+- **Auto-generated HTML**: Code block updates as controls change
+- **Stored Value Display**: Shows the underlying value stored in the hidden input
 
 ### Attributes Supported
 
@@ -66,34 +74,51 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 **Locale:**
 - `locale`: Intl.Locale value for formatting
 
+**Advanced:**
+- `value-algebra`: Expression to transform display value → stored value (e.g., `x*0.01`)
+  - Safe recursive descent parser (no eval/Function)
+  - Supports: `+`, `-`, `*`, `/`, parentheses, variable `x`, `floor()`, `ceil()`, `round()`
+  - Constraints: max 100 characters, max 5 operations (parentheses don't count)
+  - Display shows raw number; hidden input stores algebra-transformed result
+- `percentage`: Shorthand for `value-algebra="x*0.01" postfix="%"`
+- `percentage-prefix`: Shorthand for `value-algebra="x*0.01" prefix="%"`
+
 ### Smart Behaviors
 1. **Keystroke Filtering**: Invalid keystrokes are blocked before entry
 2. **Sign Flipping**: "-" key flips sign when sign="any"
 3. **Arrow Keys**: Up/down adjusts value by key-increment
 4. **Range Enforcement**: Min/max constraints prevent invalid values
 5. **Increment Validation**: Ensures values match valid-increment formula
-6. **Debounced Validation**: Increment constraints use configurable timeout (default 500ms) so users can type freely; values snap to nearest valid increment after typing stops
-7. **Precision Preservation**: Arrow key increments with integer steps preserve user-typed decimal places (e.g., 1.5 + 1 = 2.5, not 3)
+6. **Debounced Validation**: Increment constraints use configurable timeout (default 500ms)
+7. **Precision Preservation**: Arrow key increments with integer steps preserve user-typed decimal places
+8. **Value Algebra**: Algebraic expressions transform display values to stored values safely
 
 ## File Structure
 
 ```
 ├── public/
-│   ├── numeric-input.js        # Core library
-│   └── numeric-input.test.js   # Test suite (68 tests)
+│   ├── numeric-input.js        # Core library (synced copy)
+│   ├── numeric-input.test.js   # Test suite (synced copy)
+│   └── bindings/
+│       ├── react/useNumericInput.ts
+│       ├── vue/useNumericInput.ts
+│       └── angular/numeric-input.directive.ts
 ├── client/
+│   ├── public/
+│   │   ├── numeric-input.js        # Core library
+│   │   └── numeric-input.test.js   # Test suite (~84 tests)
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── AppSidebar.tsx              # Navigation sidebar
 │   │   │   ├── AttributeCard.tsx           # Attribute documentation
 │   │   │   ├── CodeBlock.tsx               # Syntax highlighted code
-│   │   │   ├── ExampleCard.tsx             # Interactive examples
-│   │   │   ├── ConfigurableExampleCard.tsx # Adjustable min/max examples
+│   │   │   ├── InteractiveExampleCard.tsx  # Interactive examples with controls
 │   │   │   ├── TestRunner.tsx              # Test suite UI
 │   │   │   └── ThemeToggle.tsx             # Dark/light mode
 │   │   ├── data/
-│   │   │   ├── attributes.ts       # Attribute definitions
-│   │   │   ├── examples.ts         # Example configurations (20 examples)
+│   │   │   ├── attributes.ts       # Attribute definitions (5 categories)
+│   │   │   ├── examples.ts         # Example configurations (10 interactive)
+│   │   │   ├── frameworkBindings.ts # Framework binding code examples
 │   │   │   └── tests.ts            # Test suite data
 │   │   ├── hooks/
 │   │   │   ├── useNumericInput.ts  # Library integration
@@ -103,7 +128,7 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 │   │   └── App.tsx                 # App root with sidebar
 │   └── index.html                  # Entry point
 ├── shared/
-│   └── schema.ts                   # TypeScript types
+│   └── schema.ts                   # TypeScript types (includes ExampleControl)
 └── server/
     └── (Express backend for serving)
 ```
@@ -123,20 +148,26 @@ The application starts automatically with `npm run dev`. Navigate to the URL sho
 </script>
 ```
 
-**With Multiple Elements:**
-```javascript
-const inputs = document.querySelectorAll('.currency-input');
-NumericInput.attach(inputs);
+**Percentage Input:**
+```html
+<input type="text" percentage min="0" max="100" />
+<!-- User types 50, form submits 0.5 -->
 ```
 
-**Framework Integration:**
-```javascript
-// React example
-useEffect(() => {
-  const element = inputRef.current;
-  NumericInput.attach(element);
-  return () => NumericInput.detach(element);
-}, []);
+**Value Algebra:**
+```html
+<input type="text" value-algebra="x*0.01" postfix="%" />
+<!-- Custom algebra: display → stored transformation -->
+```
+
+**Framework Integration (React):**
+```typescript
+import { useNumericInput } from './useNumericInput';
+
+function MyInput() {
+  const ref = useNumericInput({ percentage: true, min: 0, max: 100 });
+  return <input ref={ref} type="text" />;
+}
 ```
 
 ## Development Notes
@@ -154,13 +185,8 @@ useEffect(() => {
 3. **Event Prevention**: Better UX than validation after input
 4. **Intl API**: Leverages browser's locale capabilities
 5. **WeakMap Storage**: Prevents memory leaks
-
-### Future Enhancements
-- TypeScript definitions for library
-- NPM package publishing
-- React/Vue/Svelte wrapper components
-- Accessibility improvements (ARIA labels)
-- Copy/paste validation
+6. **Safe Expression Parser**: Recursive descent parser prevents code injection (no eval)
+7. **Interactive Examples**: Controls-based UI replaces static code editing
 
 ## Testing
 
@@ -171,66 +197,55 @@ useEffect(() => {
 4. Expand test cases for details and errors
 
 ### Test Coverage
-- ✅ Validation (min, max, increment, sign)
-- ✅ Keystroke handling (arrows, sign flip, modifiers)
-- ✅ Formatting (bases, separators, decimals)
-- ✅ Display (prefix, postfix, show-plus)
-- ✅ Locale support (decimal/group separators)
-- ✅ Edge cases (conflicts, invalid values)
-- ✅ Floating point precision (0.01 increments)
-- ✅ Increment-start attribute
-- ✅ Non-base-10 increments (hex, binary, octal)
-- ✅ Postfix/prefix display during interaction
-- ✅ Range constraint sign blocking
-- ✅ European format (comma decimal)
-- ✅ Paste filtering
-- ✅ Precision preservation (arrow key decimals)
-- ✅ Validation timeout (debounced increment snapping)
+- Validation (min, max, increment, sign)
+- Keystroke handling (arrows, sign flip, modifiers)
+- Formatting (bases, separators, decimals)
+- Display (prefix, postfix, show-plus)
+- Locale support (decimal/group separators)
+- Edge cases (conflicts, invalid values)
+- Floating point precision (0.01 increments)
+- Increment-start attribute
+- Non-base-10 increments (hex, binary, octal)
+- Postfix/prefix display during interaction
+- Range constraint sign blocking
+- European format (comma decimal)
+- Paste filtering
+- Precision preservation (arrow key decimals)
+- Validation timeout (debounced increment snapping)
+- Value algebra (expression parser, functions, security)
+- Percentage shorthands (percentage, percentage-prefix)
 
 ## Browser Compatibility
-- Chrome/Edge: ✅ Full support
-- Firefox: ✅ Full support
-- Safari: ✅ Full support (14+)
-- IE11: ❌ Not supported (uses modern JS)
+- Chrome/Edge: Full support
+- Firefox: Full support
+- Safari: Full support (14+)
+- IE11: Not supported (uses modern JS)
 
 ## Performance
-- **Library Size**: ~2KB gzipped
+- **Library Size**: ~3KB gzipped (includes expression parser)
 - **Zero Dependencies**: No external libraries required
 - **Memory Efficient**: WeakMap for element tracking
 - **Event Optimized**: Efficient keystroke filtering
+- **Zero-cost Algebra**: Expression parser code paths skipped when value-algebra not set
 
 ## Recent Changes
-- **Precision & Validation Update (Latest)**:
-  - Fixed precision preservation: Arrow key increments with integer steps now preserve user-typed decimal places (e.g., 1.5 + 1 = 2.5, not 3)
-  - Added `validation-timeout` attribute: Debounce delay in ms before snapping to valid increment (default 500ms)
-  - Added debounced increment validation: Users can type freely into fields with `valid-increment`; values snap to nearest valid increment after typing stops
-  - Split validation into `isValidRange` (immediate: sign/min/max) and `isValidIncrement` (deferred: increment check)
-  - Added `snapToIncrement` method for rounding to nearest valid increment value
-  - Timer cleanup on detach prevents memory leaks
-  - Test suite expanded from 59 to 68 tests across 16 suites
-- **Major Bug Fix Release**:
-  - Fixed keyIncrement NaN default: `parseFloat(null)` now properly defaults to `validIncrement || 1`
-  - Fixed floating-point precision: Added `roundToPrecision` helper for arrow key increments, tolerance-based modulo in `isValidValue`
-  - Added `increment-start` attribute: Separate base for increment validation (defaults to `max(0, min)`)
-  - Fixed sign handling: `min >= 0` now properly blocks negative sign flipping; `sign='negative'` auto-negates typed values
-  - Fixed decimal entry: Trailing decimals preserved during typing with `isTrailingDecimal` helper
-  - Fixed postfix display: Always shown via `formatValue`, cursor positioned before postfix
-  - Fixed European format: Dot group separators properly stripped in `parseValue`; reformatted `formatValue` to handle separator/decimal separately
-  - Fixed negative-only mode: Auto-negate for `sign='negative'` in `handleInput`; standalone minus entry on empty inputs
-  - Test suite expanded from 32 to 59 tests across 14 suites with full bug regression coverage
-  - All test names synchronized between test file and tests.ts for proper result mapping
-- **Configurable Examples**: Dynamic min/max controls on currency and percentage examples
-- **20 Examples**: Comprehensive collection covering all library features
-- Full demo application with sidebar navigation, dark/light theme, integrated test runner
+- **Value Algebra & Interactive Examples (Latest)**:
+  - Added `value-algebra` attribute with safe recursive descent expression parser (~200 lines)
+  - Parser supports: arithmetic (`+`,`-`,`*`,`/`), parentheses, variable `x`, functions (`floor`,`ceil`,`round`)
+  - Security: No eval/Function, max 100 chars, max 5 operations, parentheses don't count as operations
+  - Added `percentage` and `percentage-prefix` shorthand attributes
+  - Consolidated 20 examples → 10 interactive examples with select/input/toggle controls
+  - New `InteractiveExampleCard` component with real-time config, auto-generated HTML, stored value display
+  - Removed old `ExampleCard` and `ConfigurableExampleCard` components
+  - Added "Advanced" attribute tab (value-algebra, percentage, percentage-prefix, increment-start, validation-timeout)
+  - Added framework bindings: React hook, Vue composable, Angular directive (packaged), Svelte/Solid/Qwik/Astro (docs)
+  - Added "Framework Bindings" section with tabbed code display for 7 frameworks
+  - Test suite expanded to ~84 tests across 18 suites (added Value Algebra Tests + Percentage Tests)
+  - Updated schema with ExampleControl types for interactive example controls
 
 ## Known Limitations
 1. Non-base-10 decimal handling is simplified (integer part only)
 2. Some locale digit inputs may need additional testing
 3. Mobile keyboard handling varies by browser
-
-## Contributing
-This is a demo project. For production use, additional testing and polishing would be needed, particularly:
-- Mobile device testing
-- Additional locale testing
-- Performance optimization for large number of inputs
-- Accessibility audit
+4. Value-algebra reverse computation not supported (display value must be set directly)
+5. Expression parser limited to 5 operations and 100 characters by design

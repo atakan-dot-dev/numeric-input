@@ -114,9 +114,45 @@ export const localeAttributes: AttributeDefinition[] = [
   },
 ];
 
+export const advancedAttributes: AttributeDefinition[] = [
+  {
+    name: 'value-algebra',
+    type: 'string',
+    description: 'Algebraic expression to transform the display value into the stored value. Uses variable "x" for the display value. Supports +, -, *, / operators and floor(), ceil(), round() functions. Max 100 characters, max 5 operations. No eval() — uses a safe recursive descent parser.',
+    example: 'value-algebra="x*0.01"',
+  },
+  {
+    name: 'percentage',
+    type: 'boolean',
+    description: 'Shorthand that sets value-algebra="x*0.01" and postfix="%". User types 50, form submits 0.5. Explicit postfix overrides the default "%".',
+    example: 'percentage',
+  },
+  {
+    name: 'percentage-prefix',
+    type: 'boolean',
+    description: 'Shorthand that sets value-algebra="x*0.01" and prefix="%". Same algebra as percentage but shows the % symbol before the number.',
+    example: 'percentage-prefix',
+  },
+  {
+    name: 'increment-start',
+    type: 'number',
+    description: 'Base value for increment validation. The valid-increment check uses this as the origin point instead of max(0, min). Useful when valid values should be offset from 0.',
+    defaultValue: 'max(0, min)',
+    example: 'increment-start="3" valid-increment="5"',
+  },
+  {
+    name: 'validation-timeout',
+    type: 'number',
+    description: 'Debounce delay in milliseconds before snapping to the nearest valid increment. Allows users to type freely; the value snaps after typing stops.',
+    defaultValue: '500',
+    example: 'validation-timeout="1000"',
+  },
+];
+
 export const allAttributes: AttributeDefinition[] = [
   ...validationAttributes,
   ...formattingAttributes,
   ...displayAttributes,
   ...localeAttributes,
+  ...advancedAttributes,
 ];

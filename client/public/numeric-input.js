@@ -75,7 +75,213 @@
         config.incrementStart = Math.max(0, config.min ?? 0);
       }
 
+      const rawAlgebra = element.getAttribute('value-algebra');
+      config.valueAlgebra = null;
+      if (rawAlgebra) {
+        if (rawAlgebra.length > 100) {
+          console.error('value-algebra expression exceeds 100 character limit. Ignoring.');
+        } else {
+          const parsed = this._parseAlgebraExpr(rawAlgebra);
+          if (parsed) {
+            const opCount = this._countAlgebraOps(parsed);
+            if (opCount > 5) {
+              console.error(`value-algebra has ${opCount} operations (max 5). Ignoring.`);
+            } else {
+              config.valueAlgebra = parsed;
+            }
+          }
+        }
+      }
+
+      if (element.hasAttribute('percentage')) {
+        if (!config.postfix) config.postfix = '%';
+        if (!config.valueAlgebra) {
+          config.valueAlgebra = this._parseAlgebraExpr('x*0.01');
+        }
+      }
+
+      if (element.hasAttribute('percentage-prefix')) {
+        if (!config.prefix) config.prefix = '%';
+        if (!config.valueAlgebra) {
+          config.valueAlgebra = this._parseAlgebraExpr('x*0.01');
+        }
+      }
+
       return config;
+    },
+
+    _parseAlgebraExpr(expr) {
+      try {
+        const tokens = this._tokenizeAlgebra(expr);
+        if (!tokens) return null;
+        let pos = 0;
+
+        function peek() { return tokens[pos] || null; }
+        function consume() { return tokens[pos++]; }
+
+        function parseExpr() {
+          let left = parseTerm();
+          if (left === null) return null;
+          while (peek() && (peek().type === '+' || peek().type === '-')) {
+            const op = consume().type;
+            const right = parseTerm();
+            if (right === null) return null;
+            left = { type: 'binary', op, left, right };
+          }
+          return left;
+        }
+
+        function parseTerm() {
+          let left = parseUnary();
+          if (left === null) return null;
+          while (peek() && (peek().type === '*' || peek().type === '/')) {
+            const op = consume().type;
+            const right = parseUnary();
+            if (right === null) return null;
+            left = { type: 'binary', op, left, right };
+          }
+          return left;
+        }
+
+        function parseUnary() {
+          if (peek() && peek().type === '-') {
+            consume();
+            const operand = parsePrimary();
+            if (operand === null) return null;
+            return { type: 'binary', op: '*', left: { type: 'number', value: -1 }, right: operand };
+          }
+          return parsePrimary();
+        }
+
+        function parsePrimary() {
+          const tok = peek();
+          if (!tok) return null;
+
+          if (tok.type === 'number') {
+            consume();
+            return { type: 'number', value: tok.value };
+          }
+          if (tok.type === 'x') {
+            consume();
+            return { type: 'variable' };
+          }
+          if (tok.type === 'func') {
+            const fname = tok.value;
+            consume();
+            if (!peek() || peek().type !== '(') return null;
+            consume();
+            const arg = parseExpr();
+            if (arg === null) return null;
+            if (!peek() || peek().type !== ')') return null;
+            consume();
+            return { type: 'func', name: fname, arg };
+          }
+          if (tok.type === '(') {
+            consume();
+            const inner = parseExpr();
+            if (inner === null) return null;
+            if (!peek() || peek().type !== ')') return null;
+            consume();
+            return inner;
+          }
+          return null;
+        }
+
+        const ast = parseExpr();
+        if (ast === null || pos !== tokens.length) return null;
+        return ast;
+      } catch (e) {
+        console.error('value-algebra parse error:', e.message);
+        return null;
+      }
+    },
+
+    _tokenizeAlgebra(expr) {
+      const tokens = [];
+      let i = 0;
+      const validFuncs = ['floor', 'ceil', 'round'];
+      while (i < expr.length) {
+        const ch = expr[i];
+        if (ch === ' ' || ch === '\t') { i++; continue; }
+        if ('+-*/()'.includes(ch)) {
+          tokens.push({ type: ch });
+          i++;
+          continue;
+        }
+        if (ch === 'x' && (i + 1 >= expr.length || !/[a-zA-Z0-9_]/.test(expr[i + 1]))) {
+          tokens.push({ type: 'x' });
+          i++;
+          continue;
+        }
+        if (/[0-9.]/.test(ch)) {
+          let num = '';
+          while (i < expr.length && /[0-9.]/.test(expr[i])) {
+            num += expr[i]; i++;
+          }
+          const val = parseFloat(num);
+          if (isNaN(val)) return null;
+          tokens.push({ type: 'number', value: val });
+          continue;
+        }
+        if (/[a-zA-Z]/.test(ch)) {
+          let word = '';
+          while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
+            word += expr[i]; i++;
+          }
+          if (validFuncs.includes(word)) {
+            tokens.push({ type: 'func', value: word });
+          } else {
+            console.error(`value-algebra: unknown identifier "${word}". Ignoring expression.`);
+            return null;
+          }
+          continue;
+        }
+        console.error(`value-algebra: unexpected character "${ch}". Ignoring expression.`);
+        return null;
+      }
+      return tokens;
+    },
+
+    _countAlgebraOps(ast) {
+      if (!ast) return 0;
+      if (ast.type === 'number' || ast.type === 'variable') return 0;
+      if (ast.type === 'binary') {
+        return 1 + this._countAlgebraOps(ast.left) + this._countAlgebraOps(ast.right);
+      }
+      if (ast.type === 'func') {
+        return 1 + this._countAlgebraOps(ast.arg);
+      }
+      return 0;
+    },
+
+    evalAlgebra(ast, x) {
+      if (!ast) return x;
+      if (ast.type === 'number') return ast.value;
+      if (ast.type === 'variable') return x;
+      if (ast.type === 'binary') {
+        const l = this.evalAlgebra(ast.left, x);
+        const r = this.evalAlgebra(ast.right, x);
+        switch (ast.op) {
+          case '+': return l + r;
+          case '-': return l - r;
+          case '*': return l * r;
+          case '/': return r === 0 ? 0 : l / r;
+        }
+      }
+      if (ast.type === 'func') {
+        const val = this.evalAlgebra(ast.arg, x);
+        switch (ast.name) {
+          case 'floor': return Math.floor(val);
+          case 'ceil': return Math.ceil(val);
+          case 'round': return Math.round(val);
+        }
+      }
+      return x;
+    },
+
+    applyAlgebra(displayValue, config) {
+      if (!config.valueAlgebra) return displayValue;
+      return this.evalAlgebra(config.valueAlgebra, displayValue);
     },
 
     getDecimalSeparator(locale) {
@@ -384,7 +590,7 @@
 
         if (!this.isValidIncrement(currentParsed, config)) {
           const snapped = this.snapToIncrement(currentParsed, config);
-          originalInput.value = String(snapped);
+          originalInput.value = String(this.applyAlgebra(snapped, config));
           displayInput.value = this.formatValue(snapped, config);
           displayInput.setAttribute('data-old-value', displayInput.value);
           originalInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -421,7 +627,7 @@
         const newValue = this.roundToPrecision(rawNewValue, config.keyIncrement);
 
         if (this.isValidValue(newValue, config)) {
-          originalInput.value = String(newValue);
+          originalInput.value = String(this.applyAlgebra(newValue, config));
           displayInput.value = this.formatValue(newValue, config);
           displayInput.setAttribute('data-old-value', displayInput.value);
           originalInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -444,7 +650,7 @@
         } else {
           const newValue = -currentValue;
           if (this.isValidValue(newValue, config)) {
-            originalInput.value = String(newValue);
+            originalInput.value = String(this.applyAlgebra(newValue, config));
             displayInput.value = this.formatValue(newValue, config);
             displayInput.setAttribute('data-old-value', displayInput.value);
             originalInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -462,7 +668,7 @@
         if (currentValue !== '' && currentValue < 0) {
           const newValue = Math.abs(currentValue);
           if (this.isValidValue(newValue, config)) {
-            originalInput.value = String(newValue);
+            originalInput.value = String(this.applyAlgebra(newValue, config));
             displayInput.value = this.formatValue(newValue, config);
             displayInput.setAttribute('data-old-value', displayInput.value);
             originalInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -562,7 +768,7 @@
           displayInput.value = negDisplay;
           displayInput.setAttribute('data-old-value', negDisplay);
           if (this.isValidRange(parsed, config)) {
-            originalInput.value = String(parsed);
+            originalInput.value = String(this.applyAlgebra(parsed, config));
             const attachedData = this._attached.get(originalInput);
             if (attachedData && !this.isValidIncrement(parsed, config)) {
               this._scheduleIncrementValidation(originalInput, displayInput, config, attachedData);
@@ -575,14 +781,14 @@
           const intPart = value.replace(new RegExp('\\' + decSep + '.*$'), '');
           const intParsed = this.parseValue(intPart, config);
           if (intParsed !== '' && !isNaN(intParsed)) {
-            originalInput.value = String(intParsed);
+            originalInput.value = String(this.applyAlgebra(intParsed, config));
             displayInput.setAttribute('data-old-value', value);
           }
           return;
         }
 
         if (parsed !== '' && !isNaN(parsed) && this.isValidRange(parsed, config)) {
-          originalInput.value = String(parsed);
+          originalInput.value = String(this.applyAlgebra(parsed, config));
           displayInput.setAttribute('data-old-value', value);
           const attachedData = this._attached.get(originalInput);
           if (attachedData && !this.isValidIncrement(parsed, config)) {
@@ -612,7 +818,7 @@
         let parsed = this.parseValue(value, config);
         if (parsed !== '' && !isNaN(parsed)) {
           if (config.sign === 'negative' && parsed > 0) parsed = -parsed;
-          originalInput.value = String(parsed);
+          originalInput.value = String(this.applyAlgebra(parsed, config));
         }
         displayInput.setAttribute('data-old-value', value);
         return;
@@ -626,7 +832,7 @@
       
       if (parsed !== '' && !isNaN(parsed)) {
         if (this.isValidRange(parsed, config)) {
-          originalInput.value = String(parsed);
+          originalInput.value = String(this.applyAlgebra(parsed, config));
           const formatted = this.formatValue(parsed, config);
           if (formatted !== value) {
             displayInput.value = formatted;
@@ -702,7 +908,7 @@
         if (originalInput.value) {
           const parsed = this.parseValue(originalInput.value, config);
           if (parsed !== '' && !isNaN(parsed)) {
-            originalInput.value = String(parsed);
+            originalInput.value = String(this.applyAlgebra(parsed, config));
             displayInput.value = this.formatValue(parsed, config);
           }
         }
