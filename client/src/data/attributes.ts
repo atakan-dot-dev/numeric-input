@@ -110,6 +110,14 @@ export const displayAttributes: AttributeDefinition[] = [
     possibleValues: ['always', 'never', 'focus'],
     example: 'arrows="focus"',
   },
+  {
+    name: 'decimal-keys',
+    type: 'string',
+    description: 'Controls how period (.) and comma (,) keys behave. "both" makes either key produce the configured decimal separator. "configured" only allows the configured decimal key, blocking the other.',
+    defaultValue: 'both',
+    possibleValues: ['both', 'configured'],
+    example: 'decimal-keys="configured"',
+  },
 ];
 
 export const localeAttributes: AttributeDefinition[] = [

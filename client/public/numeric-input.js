@@ -99,6 +99,12 @@
         config.arrows = rawArrows;
       }
 
+      const rawDecimalKeys = element.getAttribute('decimal-keys');
+      config.decimalKeys = 'both';
+      if (rawDecimalKeys === 'configured') {
+        config.decimalKeys = 'configured';
+      }
+
       if (element.hasAttribute('percentage')) {
         if (!config.postfix) config.postfix = '%';
         if (!config.valueAlgebra) {
@@ -682,16 +688,107 @@
         }
         return;
       }
+
+      if (key === '.' || key === ',') {
+        const decimalSep = this.getActiveDecimalSep(config);
+        if (config.decimalKeys === 'configured') {
+          if (key !== decimalSep) {
+            event.preventDefault();
+            return;
+          }
+        } else {
+          if (key !== decimalSep) {
+            event.preventDefault();
+            const cursorPos = displayInput.selectionStart;
+            const selEnd = displayInput.selectionEnd;
+            const val = displayInput.value;
+            displayInput.value = val.substring(0, cursorPos) + decimalSep + val.substring(selEnd);
+            displayInput.setSelectionRange(cursorPos + 1, cursorPos + 1);
+            displayInput.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+          }
+        }
+      }
+    },
+
+    _smartPasteNormalize(text, config) {
+      const decimalSep = this.getActiveDecimalSep(config);
+      let cleaned = text.replace(/[^\d.,$\-+]/g, '').replace(/[$]/g, '');
+      let sign = '';
+      if (cleaned.startsWith('-')) { sign = '-'; cleaned = cleaned.slice(1); }
+      else if (cleaned.startsWith('+')) { sign = '+'; cleaned = cleaned.slice(1); }
+      cleaned = cleaned.replace(/[^0-9.,]/g, '');
+
+      if (!cleaned) return sign;
+
+      const dotCount = (cleaned.match(/\./g) || []).length;
+      const commaCount = (cleaned.match(/,/g) || []).length;
+
+      if (dotCount > 0 && commaCount > 0) {
+        const lastDot = cleaned.lastIndexOf('.');
+        const lastComma = cleaned.lastIndexOf(',');
+        if (lastComma > lastDot) {
+          cleaned = cleaned.replace(/\./g, '');
+          cleaned = cleaned.replace(',', '\x00');
+          cleaned = cleaned.replace('\x00', decimalSep);
+        } else {
+          cleaned = cleaned.replace(/,/g, '');
+          cleaned = cleaned.replace('.', '\x00');
+          cleaned = cleaned.replace('\x00', decimalSep);
+        }
+      } else if (dotCount > 1) {
+        cleaned = cleaned.replace(/\./g, '');
+      } else if (commaCount > 1) {
+        cleaned = cleaned.replace(/,/g, '');
+      } else if (dotCount === 1) {
+        const afterDot = cleaned.split('.')[1];
+        if (afterDot.length === 3) {
+          if (decimalSep === '.') {
+            // ambiguous, configured decimal is '.', treat as decimal
+          } else {
+            cleaned = cleaned.replace('.', '');
+          }
+        } else {
+          cleaned = cleaned.replace('.', decimalSep);
+        }
+      } else if (commaCount === 1) {
+        const afterComma = cleaned.split(',')[1];
+        if (afterComma.length === 3) {
+          if (decimalSep === ',') {
+            // ambiguous, configured decimal is ',', treat as decimal
+          } else {
+            cleaned = cleaned.replace(',', '');
+          }
+        } else {
+          cleaned = cleaned.replace(',', decimalSep);
+        }
+      }
+
+      return sign + cleaned;
     },
 
     handlePaste(event, originalInput, displayInput, config) {
       event.preventDefault();
       
       const pastedText = event.clipboardData.getData('text');
-      
+      const decimalSep = this.getActiveDecimalSep(config);
+
+      const rawContent = this.stripFormatting(displayInput.value, config);
+      const isFullReplace = (displayInput.selectionStart === 0 && displayInput.selectionEnd === displayInput.value.length) ||
+                            rawContent === '' || rawContent === '-' || rawContent === '+';
+
+      if (isFullReplace && config.base === 10) {
+        const normalized = this._smartPasteNormalize(pastedText, config);
+        if (normalized) {
+          displayInput.value = normalized;
+          displayInput.dispatchEvent(new Event('input', { bubbles: true }));
+          displayInput.setSelectionRange(displayInput.value.length, displayInput.value.length);
+          return;
+        }
+      }
+
       let filtered = '';
       const validChars = config.base === 10 ? '0123456789' : '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-      const decimalSep = this.getActiveDecimalSep(config);
       
       for (let char of pastedText) {
         if (validChars.includes(char) || char === decimalSep || char === '.' || char === '-' || char === '+') {

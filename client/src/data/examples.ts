@@ -25,6 +25,11 @@ const arrowsOptions = [
   { label: 'On Focus', value: 'focus' },
 ];
 
+const decimalKeysOptions = [
+  { label: 'Both (. and ,)', value: 'both' },
+  { label: 'Configured Only', value: 'configured' },
+];
+
 const separatorOptions = [
   { label: 'None', value: 'none' },
   { label: 'Locale', value: 'locale' },
@@ -64,30 +69,13 @@ export const examples: ExampleConfig[] = [
     ],
   },
   {
-    id: 'increments',
-    title: 'Range & Increments',
-    description: 'Set min/max constraints and increment steps with configurable validation timeout',
-    category: 'Validation',
-    config: { validIncrement: 5, keyIncrement: 5, incrementStart: 0 },
-    controls: [
-      { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
-      { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
-      { type: 'input', key: 'validIncrement', label: 'Valid Increment', inputType: 'number', placeholder: '0' },
-      { type: 'input', key: 'keyIncrement', label: 'Key Increment', inputType: 'number', placeholder: '1' },
-      { type: 'input', key: 'incrementStart', label: 'Increment Start', inputType: 'number', placeholder: '0' },
-      { type: 'input', key: 'validationTimeout', label: 'Timeout (ms)', inputType: 'number', placeholder: '500' },
-    ],
-  },
-  {
     id: 'currency',
     title: 'Currency',
     description: 'Formatted currency input with prefix, separators, and decimal precision',
     category: 'Formatting',
     config: { prefix: '$', decimal: '.', separators: ',', min: 0 },
     controls: [
-      { type: 'switch-label', key: 'prefix', altKey: 'postfix', leftLabel: 'Prefix', rightLabel: 'Postfix' },
-      { type: 'input', key: 'prefix', label: 'Prefix', inputType: 'text', placeholder: '$' },
-      { type: 'input', key: 'postfix', label: 'Postfix', inputType: 'text', placeholder: 'USD' },
+      { type: 'switch-label-input', key: 'prefix', altKey: 'postfix', leftLabel: 'Prefix', rightLabel: 'Postfix', leftPlaceholder: 'USD', rightPlaceholder: '$' },
       { type: 'select', key: 'separators', label: 'Separators', options: separatorOptions },
       { type: 'select', key: 'decimal', label: 'Decimal', options: decimalOptions },
       { type: 'input', key: 'keyIncrement', label: 'Key Increment', inputType: 'number', placeholder: '1' },
@@ -106,6 +94,45 @@ export const examples: ExampleConfig[] = [
       { type: 'switch-label', key: 'percentage', altKey: 'percentagePrefix', leftLabel: 'Prefix', rightLabel: 'Postfix' },
       { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
       { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
+    ],
+  },
+  {
+    id: 'increments',
+    title: 'Range & Increments',
+    description: 'Set min/max constraints and increment steps with configurable validation timeout',
+    category: 'Validation',
+    config: { validIncrement: 5, keyIncrement: 5, incrementStart: 0 },
+    controls: [
+      { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
+      { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
+      { type: 'input', key: 'validIncrement', label: 'Valid Increment', inputType: 'number', placeholder: '0' },
+      { type: 'input', key: 'keyIncrement', label: 'Key Increment', inputType: 'number', placeholder: '1' },
+      { type: 'input', key: 'incrementStart', label: 'Increment Start', inputType: 'number', placeholder: '0' },
+      { type: 'input', key: 'validationTimeout', label: 'Timeout (ms)', inputType: 'number', placeholder: '500' },
+    ],
+  },
+  {
+    id: 'decimal-keys',
+    title: 'Decimal Keys',
+    description: 'Control how period and comma keys behave — both produce decimal separator, or only the configured one',
+    category: 'Input',
+    config: { decimalKeys: 'both', decimal: ',' },
+    controls: [
+      { type: 'select', key: 'decimalKeys', label: 'Decimal Keys', options: decimalKeysOptions },
+      { type: 'select', key: 'decimal', label: 'Decimal Char', options: decimalOptions },
+      { type: 'select', key: 'separators', label: 'Separators', options: separatorOptions },
+    ],
+  },
+  {
+    id: 'smart-paste',
+    title: 'Smart Paste',
+    description: 'Paste numbers in any format — auto-detects European (100.000,25) vs US (100,000.25) style',
+    category: 'Input',
+    config: { decimal: '.', separators: ',' },
+    controls: [
+      { type: 'select', key: 'decimal', label: 'Decimal Char', options: decimalOptions },
+      { type: 'select', key: 'separators', label: 'Separators', options: separatorOptions },
+      { type: 'select', key: 'locale', label: 'Locale', options: localeOptions },
     ],
   },
   {
@@ -145,6 +172,7 @@ export const examples: ExampleConfig[] = [
       { type: 'select', key: 'locale', label: 'Locale', options: localeOptions },
       { type: 'select', key: 'separators', label: 'Separators', options: separatorOptions },
       { type: 'select', key: 'decimal', label: 'Decimal', options: decimalOptions },
+      { type: 'select', key: 'decimalKeys', label: 'Decimal Keys', options: decimalKeysOptions },
     ],
   },
   {
@@ -198,6 +226,7 @@ export const examples: ExampleConfig[] = [
       { type: 'toggle', key: 'percentage', label: 'Percentage' },
       { type: 'input', key: 'valueAlgebra', label: 'Value Algebra', inputType: 'text', placeholder: 'e.g. x*0.01' },
       { type: 'select', key: 'arrows', label: 'Arrows', options: arrowsOptions },
+      { type: 'select', key: 'decimalKeys', label: 'Decimal Keys', options: decimalKeysOptions },
     ],
   },
 ];

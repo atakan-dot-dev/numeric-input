@@ -41,6 +41,7 @@ export const numericInputConfigSchema = z.object({
   percentage: z.boolean().optional(),
   percentagePrefix: z.boolean().optional(),
   arrows: z.enum(['always', 'never', 'focus']).optional(),
+  decimalKeys: z.enum(['both', 'configured']).optional(),
 });
 
 export type NumericInputConfig = z.infer<typeof numericInputConfigSchema>;
@@ -94,6 +95,15 @@ export const exampleControlSchema = z.discriminatedUnion('type', [
     altKey: z.string(),
     leftLabel: z.string(),
     rightLabel: z.string(),
+  }),
+  z.object({
+    type: z.literal('switch-label-input'),
+    key: z.string(),
+    altKey: z.string(),
+    leftLabel: z.string(),
+    rightLabel: z.string(),
+    leftPlaceholder: z.string().optional(),
+    rightPlaceholder: z.string().optional(),
   }),
 ]);
 

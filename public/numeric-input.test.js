@@ -1095,6 +1095,111 @@ TestRunner.suite('Arrow Button Tests', () => {
   });
 });
 
+TestRunner.suite('Decimal Keys Tests', () => {
+  TestRunner.test('decimal-keys defaults to both', () => {
+    const config = NumericInput.parseConfig(createMockInput({}));
+    assertEqual(config.decimalKeys, 'both', 'Default decimalKeys should be both');
+  });
+
+  TestRunner.test('decimal-keys=configured parses correctly', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-keys': 'configured' }));
+    assertEqual(config.decimalKeys, 'configured', 'Should parse decimal-keys=configured');
+  });
+
+  TestRunner.test('invalid decimal-keys value defaults to both', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-keys': 'invalid' }));
+    assertEqual(config.decimalKeys, 'both', 'Invalid value should default to both');
+  });
+
+  TestRunner.test('both mode: period produces configured comma decimal', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    assertEqual(config.decimalKeys, 'both', 'Should be both mode');
+    const decSep = NumericInput.getActiveDecimalSep(config);
+    assertEqual(decSep, ',', 'Active decimal should be comma');
+  });
+
+  TestRunner.test('configured mode: only configured key allowed', () => {
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-keys': 'configured', decimal: '.' }));
+    assertEqual(config.decimalKeys, 'configured', 'Should be configured mode');
+    const decSep = NumericInput.getActiveDecimalSep(config);
+    assertEqual(decSep, '.', 'Active decimal should be period');
+  });
+});
+
+TestRunner.suite('Smart Paste Tests', () => {
+  TestRunner.test('continental European into US box: 100.000,25 → 100000.25', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('100.000,25', config);
+    assertEqual(result, '100000.25', 'Should detect continental format and convert');
+  });
+
+  TestRunner.test('US format into European box: 100,000.25 → 100000,25', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    const result = NumericInput._smartPasteNormalize('100,000.25', config);
+    assertEqual(result, '100000,25', 'Should detect US format and convert');
+  });
+
+  TestRunner.test('repeated dots stripped: 1.000.000 → 1000000', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('1.000.000', config);
+    assertEqual(result, '1000000', 'Multiple dots should be stripped as thousands separators');
+  });
+
+  TestRunner.test('repeated commas stripped: 1,000,000 → 1000000', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('1,000,000', config);
+    assertEqual(result, '1000000', 'Multiple commas should be stripped as thousands separators');
+  });
+
+  TestRunner.test('ambiguous 3 digits: 1.000 with US config → 1.000 (decimal)', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('1.000', config);
+    assertEqual(result, '1.000', 'Ambiguous with US config should keep as decimal');
+  });
+
+  TestRunner.test('ambiguous 3 digits: 1.000 with EU config → 1000 (thousands)', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    const result = NumericInput._smartPasteNormalize('1.000', config);
+    assertEqual(result, '1000', 'Ambiguous with EU config should strip as thousands');
+  });
+
+  TestRunner.test('ambiguous 3 digits: 1,000 with EU config → 1,000 (decimal)', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    const result = NumericInput._smartPasteNormalize('1,000', config);
+    assertEqual(result, '1,000', 'Ambiguous comma with EU config should keep as decimal');
+  });
+
+  TestRunner.test('ambiguous 3 digits: 1,000 with US config → 1000 (thousands)', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('1,000', config);
+    assertEqual(result, '1000', 'Ambiguous comma with US config should strip as thousands');
+  });
+
+  TestRunner.test('single separator with 2 digits after is decimal: 3.14 → 3.14', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('3.14', config);
+    assertEqual(result, '3.14', 'Should treat as decimal');
+  });
+
+  TestRunner.test('negative number preserved: -100.000,25 → -100000.25', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('-100.000,25', config);
+    assertEqual(result, '-100000.25', 'Should preserve negative sign');
+  });
+
+  TestRunner.test('plain integer passes through: 12345 → 12345', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('12345', config);
+    assertEqual(result, '12345', 'Plain integer should pass through');
+  });
+
+  TestRunner.test('currency symbols stripped: $1,234.56 → 1234.56', () => {
+    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const result = NumericInput._smartPasteNormalize('$1,234.56', config);
+    assertEqual(result, '1234.56', 'Should strip $ and handle US format');
+  });
+});
+
 // Export for use in browser and Node
 if (typeof window !== 'undefined') {
   window.TestRunner = TestRunner;

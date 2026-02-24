@@ -25,6 +25,7 @@ function configToHtml(config: Partial<NumericInputConfig>): string {
     validationTimeout: 'validation-timeout',
     percentagePrefix: 'percentage-prefix',
     arrows: 'arrows',
+    decimalKeys: 'decimal-keys',
   };
 
   for (const [key, value] of Object.entries(config)) {
@@ -35,6 +36,7 @@ function configToHtml(config: Partial<NumericInputConfig>): string {
     if (key === 'base' && value === 10) continue;
     if (key === 'letterCase' && value === 'upper') continue;
     if (key === 'arrows' && value === 'always') continue;
+    if (key === 'decimalKeys' && value === 'both') continue;
 
     const attrName = keyMap[key] || key;
 
@@ -186,6 +188,76 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
             >
               {control.rightLabel}
             </Label>
+          </div>
+        </div>
+      );
+    }
+
+    if (control.type === 'switch-label-input') {
+      const keyVal = (config as any)[control.key];
+      const isKeyActive = keyVal !== undefined && keyVal !== null && keyVal !== '' && keyVal !== false;
+      const activeKey = isKeyActive ? control.key : control.altKey;
+      const activeVal = (config as any)[activeKey];
+      return (
+        <div key={`${control.type}-${idx}`} className="col-span-2 space-y-1" data-testid={`control-${example.id}-${control.key}-switch-input`}>
+          <Label className="text-xs invisible select-none" aria-hidden="true">&zwj;</Label>
+          <div className="flex items-center justify-center gap-2 h-8">
+            <Input
+              type="text"
+              value={!isKeyActive && typeof activeVal === 'string' ? activeVal : ''}
+              placeholder={control.leftPlaceholder || ''}
+              disabled={isKeyActive}
+              onChange={(e) => {
+                const val = e.target.value;
+                updateConfig(control.altKey, val || undefined);
+              }}
+              className="h-8 text-xs font-mono w-16 text-center"
+              data-testid={`input-${example.id}-${control.altKey}-inline`}
+            />
+            <Label
+              className={`text-xs cursor-pointer transition-colors whitespace-nowrap ${!isKeyActive ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
+              htmlFor={`ctrl-${example.id}-${control.key}-switch-input`}
+            >
+              {control.leftLabel}
+            </Label>
+            <Switch
+              id={`ctrl-${example.id}-${control.key}-switch-input`}
+              checked={isKeyActive}
+              onCheckedChange={(checked) => {
+                setConfig(prev => {
+                  const next = { ...prev };
+                  if (checked) {
+                    const prevAlt = (prev as any)[control.altKey];
+                    delete (next as any)[control.altKey];
+                    (next as any)[control.key] = typeof prevAlt === 'string' ? prevAlt : (control.rightPlaceholder || '');
+                  } else {
+                    const prevKey = (prev as any)[control.key];
+                    delete (next as any)[control.key];
+                    (next as any)[control.altKey] = typeof prevKey === 'string' ? prevKey : (control.leftPlaceholder || '');
+                  }
+                  return next;
+                });
+              }}
+              data-testid={`switch-${example.id}-${control.key}-input`}
+            />
+            <Label
+              className={`text-xs cursor-pointer transition-colors whitespace-nowrap ${isKeyActive ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
+              htmlFor={`ctrl-${example.id}-${control.key}-switch-input`}
+            >
+              {control.rightLabel}
+            </Label>
+            <Input
+              type="text"
+              value={isKeyActive && typeof activeVal === 'string' ? activeVal : ''}
+              placeholder={control.rightPlaceholder || ''}
+              disabled={!isKeyActive}
+              onChange={(e) => {
+                const val = e.target.value;
+                updateConfig(control.key, val || undefined);
+              }}
+              className="h-8 text-xs font-mono w-16 text-center"
+              data-testid={`input-${example.id}-${control.key}-inline`}
+            />
           </div>
         </div>
       );
