@@ -144,14 +144,17 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
 
     if (control.type === 'toggle') {
       return (
-        <div key={key} className="flex items-center justify-between gap-2" data-testid={`control-${example.id}-${key}`}>
-          <Label className="text-xs cursor-pointer" htmlFor={`ctrl-${example.id}-${key}`}>{control.label}</Label>
-          <Switch
-            id={`ctrl-${example.id}-${key}`}
-            checked={!!currentVal}
-            onCheckedChange={(checked) => updateConfig(key, checked || undefined)}
-            data-testid={`toggle-${example.id}-${key}`}
-          />
+        <div key={key} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
+          <Label className="text-xs invisible select-none" aria-hidden="true">&zwj;</Label>
+          <div className="flex items-center justify-between gap-2 h-8">
+            <Label className="text-xs cursor-pointer" htmlFor={`ctrl-${example.id}-${key}`}>{control.label}</Label>
+            <Switch
+              id={`ctrl-${example.id}-${key}`}
+              checked={!!currentVal}
+              onCheckedChange={(checked) => updateConfig(key, checked || undefined)}
+              data-testid={`toggle-${example.id}-${key}`}
+            />
+          </div>
         </div>
       );
     }
@@ -170,7 +173,7 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
               }
             }}
           >
-            <SelectTrigger id={`ctrl-${example.id}-${key}`} data-testid={`select-${example.id}-${key}`}>
+            <SelectTrigger id={`ctrl-${example.id}-${key}`} className="h-8 text-xs" data-testid={`select-${example.id}-${key}`}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -236,7 +239,7 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
             <h4 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide">
               Configuration
             </h4>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
               {example.controls.map(renderControl)}
             </div>
           </div>

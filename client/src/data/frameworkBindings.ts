@@ -14,27 +14,35 @@ export const frameworkBindings: FrameworkBinding[] = [
     name: 'React',
     type: 'package',
     icon: 'react',
-    installInstructions: `# Install the library
-npm install numeric-input
+    installInstructions: `npm install numeric-input numeric-input-react`,
+    usageCode: `import { NumericInput } from 'numeric-input-react';
 
-# Copy the hook to your project
-# public/bindings/react/useNumericInput.ts`,
-    usageCode: `import { useRef } from 'react';
-import { useNumericInput } from './useNumericInput';
+function App() {
+  return (
+    <NumericInput
+      id="currency"
+      prefix="$"
+      separators=","
+      min={0}
+      placeholder="$0.00"
+      onStoredValueChange={(value) => console.log('Stored:', value)}
+    />
+  );
+}
 
-function CurrencyInput() {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useNumericInput(inputRef, {
-    prefix: '$',
-    separators: ',',
-    decimal: '.',
-    min: '0',
-  });
-
-  return <input ref={inputRef} type="text" placeholder="$0.00" />;
+// Percentage input
+function PercentageInput() {
+  return (
+    <NumericInput
+      id="tax-rate"
+      percentage
+      min={0}
+      max={100}
+      placeholder="0%"
+    />
+  );
 }`,
-    bindingSource: `import { useEffect, useRef } from 'react';
+    bindingSource: `import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
 declare global {
   interface Window {
@@ -45,66 +53,179 @@ declare global {
   }
 }
 
-export function useNumericInput(
-  ref: React.RefObject<HTMLInputElement>,
-  attributes?: Record<string, string | boolean>
-) {
-  const attachedRef = useRef(false);
+export interface NumericInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
+  prefix?: string;
+  postfix?: string;
+  integer?: boolean;
+  sign?: 'any' | 'positive' | 'negative';
+  showPlus?: boolean;
+  base?: number;
+  letterCase?: 'upper' | 'lower';
+  separators?: string;
+  decimal?: string;
+  locale?: string;
+  validIncrement?: number;
+  keyIncrement?: number;
+  incrementStart?: number;
+  validationTimeout?: number;
+  valueAlgebra?: string;
+  percentage?: boolean;
+  percentagePrefix?: boolean;
+  onStoredValueChange?: (value: string) => void;
+}
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !window.NumericInput) return;
+const ATTR_MAP: Record<string, string> = {
+  showPlus: 'show-plus',
+  letterCase: 'letter-case',
+  validIncrement: 'valid-increment',
+  keyIncrement: 'key-increment',
+  incrementStart: 'increment-start',
+  validationTimeout: 'validation-timeout',
+  valueAlgebra: 'value-algebra',
+  percentagePrefix: 'percentage-prefix',
+};
 
-    if (attributes) {
-      Object.entries(attributes).forEach(([key, value]) => {
-        if (typeof value === 'boolean' && value) {
-          el.setAttribute(key, '');
-        } else if (typeof value === 'string') {
-          el.setAttribute(key, value);
-        }
-      });
-    }
+const CONFIG_KEYS = [
+  'prefix', 'postfix', 'integer', 'sign', 'showPlus', 'base',
+  'letterCase', 'separators', 'decimal', 'locale', 'validIncrement',
+  'keyIncrement', 'incrementStart', 'validationTimeout', 'valueAlgebra',
+  'percentage', 'percentagePrefix',
+] as const;
 
-    window.NumericInput.attach(el);
-    attachedRef.current = true;
+export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
+  (props, ref) => {
+    const {
+      prefix, postfix, integer, sign, showPlus, base, letterCase,
+      separators, decimal, locale, validIncrement, keyIncrement,
+      incrementStart, validationTimeout, valueAlgebra, percentage,
+      percentagePrefix, onStoredValueChange, ...inputProps
+    } = props;
 
-    return () => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const attachedRef = useRef(false);
+
+    useImperativeHandle(ref, () => inputRef.current!);
+
+    useEffect(() => {
+      const el = inputRef.current;
+      if (!el || !window.NumericInput) return;
+
       if (attachedRef.current) {
         window.NumericInput.detach(el);
         attachedRef.current = false;
       }
-    };
-  }, [ref, attributes]);
-}`,
+
+      const allAttrs = CONFIG_KEYS.map(k => ATTR_MAP[k] || k);
+      allAttrs.forEach(attr => el.removeAttribute(attr));
+
+      const configValues = {
+        prefix, postfix, integer, sign, showPlus, base, letterCase,
+        separators, decimal, locale, validIncrement, keyIncrement,
+        incrementStart, validationTimeout, valueAlgebra, percentage,
+        percentagePrefix,
+      };
+
+      for (const key of CONFIG_KEYS) {
+        const value = configValues[key];
+        if (value === undefined || value === null
+            || value === false || value === '') continue;
+        const attrName = ATTR_MAP[key] || key;
+        if (value === true) {
+          el.setAttribute(attrName, '');
+        } else {
+          el.setAttribute(attrName, String(value));
+        }
+      }
+
+      window.NumericInput.attach(el);
+      attachedRef.current = true;
+
+      const numericId = el.id ? el.id + '-numeric' : null;
+      const numericEl = numericId
+        ? document.getElementById(numericId) as HTMLInputElement
+        : null;
+
+      const handler = () => {
+        if (numericEl && onStoredValueChange) {
+          onStoredValueChange(numericEl.value);
+        }
+      };
+
+      if (numericEl) {
+        numericEl.addEventListener('input', handler);
+        handler();
+      }
+
+      return () => {
+        if (numericEl) numericEl.removeEventListener('input', handler);
+        if (attachedRef.current) {
+          window.NumericInput.detach(el);
+          attachedRef.current = false;
+        }
+      };
+    }, [
+      prefix, postfix, integer, sign, showPlus, base, letterCase,
+      separators, decimal, locale, validIncrement, keyIncrement,
+      incrementStart, validationTimeout, valueAlgebra, percentage,
+      percentagePrefix,
+    ]);
+
+    const needsTextType = !!(
+      prefix || postfix || percentage || percentagePrefix ||
+      (separators && separators !== 'none' && separators !== 'locale') ||
+      (base && base !== 10)
+    );
+
+    return (
+      <input
+        ref={inputRef}
+        type={needsTextType ? 'text' : 'number'}
+        inputMode="numeric"
+        {...inputProps}
+      />
+    );
+  }
+);
+
+NumericInput.displayName = 'NumericInput';
+export default NumericInput;`,
   },
   {
     id: 'vue',
     name: 'Vue',
     type: 'package',
     icon: 'vue',
-    installInstructions: `# Install the library
-npm install numeric-input
-
-# Copy the composable to your project
-# public/bindings/vue/useNumericInput.ts`,
+    installInstructions: `npm install numeric-input numeric-input-vue`,
     usageCode: `<script setup lang="ts">
-import { ref } from 'vue';
-import { useNumericInput } from './useNumericInput';
+import NumericInput from 'numeric-input-vue';
 
-const inputRef = ref<HTMLInputElement | null>(null);
-
-useNumericInput(inputRef, {
-  prefix: '$',
-  separators: ',',
-  decimal: '.',
-  min: '0',
-});
+function handleStoredValue(value: string) {
+  console.log('Stored:', value);
+}
 </script>
 
 <template>
-  <input ref="inputRef" type="text" placeholder="$0.00" />
+  <NumericInput
+    id="currency"
+    prefix="$"
+    separators=","
+    :min="0"
+    placeholder="$0.00"
+    @stored-value-change="handleStoredValue"
+  />
+
+  <!-- Percentage input -->
+  <NumericInput
+    id="tax-rate"
+    percentage
+    :min="0"
+    :max="100"
+    placeholder="0%"
+  />
 </template>`,
-    bindingSource: `import { onMounted, onUnmounted, ref, type Ref } from 'vue';
+    bindingSource: `<script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 
 declare global {
   interface Window {
@@ -115,65 +236,188 @@ declare global {
   }
 }
 
-export function useNumericInput(
-  inputRef: Ref<HTMLInputElement | null>,
-  attributes?: Record<string, string | boolean>
-) {
-  let attached = false;
+export interface NumericInputProps {
+  id?: string;
+  placeholder?: string;
+  prefix?: string;
+  postfix?: string;
+  integer?: boolean;
+  sign?: 'any' | 'positive' | 'negative';
+  showPlus?: boolean;
+  base?: number;
+  letterCase?: 'upper' | 'lower';
+  separators?: string;
+  decimal?: string;
+  locale?: string;
+  min?: number;
+  max?: number;
+  validIncrement?: number;
+  keyIncrement?: number;
+  incrementStart?: number;
+  validationTimeout?: number;
+  valueAlgebra?: string;
+  percentage?: boolean;
+  percentagePrefix?: boolean;
+}
 
-  onMounted(() => {
-    const el = inputRef.value;
-    if (!el || !window.NumericInput) return;
+const props = withDefaults(defineProps<NumericInputProps>(), {});
+const emit = defineEmits<{
+  storedValueChange: [value: string];
+}>();
 
-    if (attributes) {
-      Object.entries(attributes).forEach(([key, value]) => {
-        if (typeof value === 'boolean' && value) {
-          el.setAttribute(key, '');
-        } else if (typeof value === 'string') {
-          el.setAttribute(key, value);
-        }
-      });
+const inputRef = ref<HTMLInputElement | null>(null);
+let attached = false;
+let currentNumericEl: HTMLInputElement | null = null;
+let currentHandler: (() => void) | null = null;
+
+const ATTR_MAP: Record<string, string> = {
+  showPlus: 'show-plus',
+  letterCase: 'letter-case',
+  validIncrement: 'valid-increment',
+  keyIncrement: 'key-increment',
+  incrementStart: 'increment-start',
+  validationTimeout: 'validation-timeout',
+  valueAlgebra: 'value-algebra',
+  percentagePrefix: 'percentage-prefix',
+};
+
+const CONFIG_KEYS = [
+  'prefix', 'postfix', 'integer', 'sign', 'showPlus', 'base',
+  'letterCase', 'separators', 'decimal', 'locale', 'min', 'max',
+  'validIncrement', 'keyIncrement', 'incrementStart',
+  'validationTimeout', 'valueAlgebra', 'percentage', 'percentagePrefix',
+] as const;
+
+function cleanupListener() {
+  if (currentNumericEl && currentHandler) {
+    currentNumericEl.removeEventListener('input', currentHandler);
+    currentNumericEl = null;
+    currentHandler = null;
+  }
+}
+
+function applyConfig() {
+  const el = inputRef.value;
+  if (!el || !window.NumericInput) return;
+
+  cleanupListener();
+
+  if (attached) {
+    window.NumericInput.detach(el);
+    attached = false;
+  }
+
+  const allAttrs = CONFIG_KEYS.map(k => ATTR_MAP[k] || k);
+  allAttrs.forEach(attr => el.removeAttribute(attr));
+
+  for (const key of CONFIG_KEYS) {
+    const value = props[key];
+    if (value === undefined || value === null
+        || value === false || value === '') continue;
+    const attrName = ATTR_MAP[key] || key;
+    if (value === true) {
+      el.setAttribute(attrName, '');
+    } else {
+      el.setAttribute(attrName, String(value));
     }
+  }
 
-    window.NumericInput.attach(el);
-    attached = true;
-  });
+  window.NumericInput.attach(el);
+  attached = true;
 
-  onUnmounted(() => {
-    const el = inputRef.value;
-    if (el && attached) {
-      window.NumericInput.detach(el);
-      attached = false;
-    }
-  });
-}`,
+  const numericId = el.id ? el.id + '-numeric' : null;
+  const numericEl = numericId
+    ? (document.getElementById(numericId) as HTMLInputElement)
+    : null;
+
+  if (numericEl) {
+    currentNumericEl = numericEl;
+    currentHandler = () => {
+      emit('storedValueChange', numericEl.value);
+    };
+    numericEl.addEventListener('input', currentHandler);
+  }
+}
+
+onMounted(() => applyConfig());
+
+watch(() => [
+  props.prefix, props.postfix, props.integer, props.sign,
+  props.showPlus, props.base, props.letterCase, props.separators,
+  props.decimal, props.locale, props.min, props.max,
+  props.validIncrement, props.keyIncrement, props.incrementStart,
+  props.validationTimeout, props.valueAlgebra, props.percentage,
+  props.percentagePrefix,
+], () => applyConfig());
+
+onUnmounted(() => {
+  cleanupListener();
+  const el = inputRef.value;
+  if (el && attached) {
+    window.NumericInput.detach(el);
+    attached = false;
+  }
+});
+
+const needsTextType = !!(
+  props.prefix || props.postfix || props.percentage ||
+  props.percentagePrefix ||
+  (props.separators && props.separators !== 'none'
+    && props.separators !== 'locale') ||
+  (props.base && props.base !== 10)
+);
+</script>
+
+<template>
+  <input
+    ref="inputRef"
+    :id="id"
+    :type="needsTextType ? 'text' : 'number'"
+    inputmode="numeric"
+    :placeholder="placeholder"
+  />
+</template>`,
   },
   {
     id: 'angular',
     name: 'Angular',
     type: 'package',
     icon: 'angular',
-    installInstructions: `# Install the library
-npm install numeric-input
+    installInstructions: `npm install numeric-input numeric-input-angular`,
+    usageCode: `// Import the component
+import { NumericInputComponent } from 'numeric-input-angular';
 
-# Copy the directive to your project
-# public/bindings/angular/numeric-input.directive.ts`,
-    usageCode: `// app.module.ts
-import { NumericInputDirective } from './numeric-input.directive';
+@Component({
+  imports: [NumericInputComponent],
+  template: \`
+    <numeric-input
+      inputId="currency"
+      prefix="$"
+      separators=","
+      [min]="0"
+      placeholder="$0.00"
+      (storedValueChange)="onValueChange($event)"
+    />
 
-@NgModule({
-  declarations: [NumericInputDirective],
+    <!-- Percentage input -->
+    <numeric-input
+      inputId="tax-rate"
+      [percentage]="true"
+      [min]="0"
+      [max]="100"
+      placeholder="0%"
+    />
+  \`,
 })
-export class AppModule {}
-
-// component.html
-<input
-  numericInput
-  [numericInputAttributes]="{ prefix: '$', separators: ',', min: '0' }"
-  type="text"
-  placeholder="$0.00"
-/>`,
-    bindingSource: `import { Directive, ElementRef, Input, OnInit, OnDestroy } from '@angular/core';
+export class AppComponent {
+  onValueChange(value: string) {
+    console.log('Stored:', value);
+  }
+}`,
+    bindingSource: `import {
+  Component, ElementRef, Input, Output, EventEmitter,
+  ViewChild, AfterViewInit, OnDestroy, OnChanges, SimpleChanges,
+} from '@angular/core';
 
 declare global {
   interface Window {
@@ -184,38 +428,144 @@ declare global {
   }
 }
 
-@Directive({
-  selector: '[numericInput]',
+const ATTR_MAP: Record<string, string> = {
+  showPlus: 'show-plus',
+  letterCase: 'letter-case',
+  validIncrement: 'valid-increment',
+  keyIncrement: 'key-increment',
+  incrementStart: 'increment-start',
+  validationTimeout: 'validation-timeout',
+  valueAlgebra: 'value-algebra',
+  percentagePrefix: 'percentage-prefix',
+};
+
+@Component({
+  selector: 'numeric-input',
+  standalone: true,
+  template: \`
+    <input
+      #inputEl
+      [id]="inputId"
+      [type]="computedType"
+      inputmode="numeric"
+      [placeholder]="placeholder"
+      [class]="inputClass"
+    />
+  \`,
 })
-export class NumericInputDirective implements OnInit, OnDestroy {
-  @Input() numericInputAttributes?: Record<string, string | boolean>;
+export class NumericInputComponent
+  implements AfterViewInit, OnDestroy, OnChanges
+{
+  @ViewChild('inputEl') inputElRef!: ElementRef<HTMLInputElement>;
+
+  @Input() inputId = '';
+  @Input() placeholder = '';
+  @Input() inputClass = '';
+
+  @Input() prefix?: string;
+  @Input() postfix?: string;
+  @Input() integer?: boolean;
+  @Input() sign?: 'any' | 'positive' | 'negative';
+  @Input() showPlus?: boolean;
+  @Input() base?: number;
+  @Input() letterCase?: 'upper' | 'lower';
+  @Input() separators?: string;
+  @Input() decimal?: string;
+  @Input() locale?: string;
+  @Input() min?: number;
+  @Input() max?: number;
+  @Input() validIncrement?: number;
+  @Input() keyIncrement?: number;
+  @Input() incrementStart?: number;
+  @Input() validationTimeout?: number;
+  @Input() valueAlgebra?: string;
+  @Input() percentage?: boolean;
+  @Input() percentagePrefix?: boolean;
+
+  @Output() storedValueChange = new EventEmitter<string>();
 
   private attached = false;
+  private inputHandler: (() => void) | null = null;
+  private numericEl: HTMLInputElement | null = null;
 
-  constructor(private el: ElementRef<HTMLInputElement>) {}
+  get computedType(): string {
+    return !!(
+      this.prefix || this.postfix || this.percentage ||
+      this.percentagePrefix ||
+      (this.separators && this.separators !== 'none'
+        && this.separators !== 'locale') ||
+      (this.base && this.base !== 10)
+    ) ? 'text' : 'number';
+  }
 
-  ngOnInit(): void {
-    const element = this.el.nativeElement;
+  ngAfterViewInit(): void {
+    this.applyConfig();
+  }
 
-    if (this.numericInputAttributes) {
-      Object.entries(this.numericInputAttributes).forEach(([key, value]) => {
-        if (typeof value === 'boolean' && value) {
-          element.setAttribute(key, '');
-        } else if (typeof value === 'string') {
-          element.setAttribute(key, value);
-        }
-      });
-    }
-
-    if (window.NumericInput) {
-      window.NumericInput.attach(element);
-      this.attached = true;
+  ngOnChanges(_changes: SimpleChanges): void {
+    if (this.inputElRef) {
+      this.applyConfig();
     }
   }
 
   ngOnDestroy(): void {
-    if (this.attached && window.NumericInput) {
-      window.NumericInput.detach(this.el.nativeElement);
+    this.cleanup();
+  }
+
+  private applyConfig(): void {
+    const el = this.inputElRef?.nativeElement;
+    if (!el || !window.NumericInput) return;
+
+    this.cleanup();
+
+    const configKeys = [
+      'prefix', 'postfix', 'integer', 'sign', 'showPlus', 'base',
+      'letterCase', 'separators', 'decimal', 'locale', 'min', 'max',
+      'validIncrement', 'keyIncrement', 'incrementStart',
+      'validationTimeout', 'valueAlgebra', 'percentage',
+      'percentagePrefix',
+    ];
+
+    const allAttrs = configKeys.map(k => ATTR_MAP[k] || k);
+    allAttrs.forEach(attr => el.removeAttribute(attr));
+
+    for (const key of configKeys) {
+      const value = (this as any)[key];
+      if (value === undefined || value === null
+          || value === false || value === '') continue;
+      const attrName = ATTR_MAP[key] || key;
+      if (value === true) {
+        el.setAttribute(attrName, '');
+      } else {
+        el.setAttribute(attrName, String(value));
+      }
+    }
+
+    window.NumericInput.attach(el);
+    this.attached = true;
+
+    const numericId = el.id ? el.id + '-numeric' : null;
+    this.numericEl = numericId
+      ? (document.getElementById(numericId) as HTMLInputElement)
+      : null;
+
+    if (this.numericEl) {
+      this.inputHandler = () => {
+        this.storedValueChange.emit(this.numericEl!.value);
+      };
+      this.numericEl.addEventListener('input', this.inputHandler);
+    }
+  }
+
+  private cleanup(): void {
+    if (this.numericEl && this.inputHandler) {
+      this.numericEl.removeEventListener('input', this.inputHandler);
+      this.inputHandler = null;
+      this.numericEl = null;
+    }
+    const el = this.inputElRef?.nativeElement;
+    if (el && this.attached) {
+      window.NumericInput.detach(el);
       this.attached = false;
     }
   }
@@ -226,107 +576,220 @@ export class NumericInputDirective implements OnInit, OnDestroy {
     name: 'Svelte',
     type: 'docs',
     icon: 'svelte',
-    usageCode: `<script lang="ts">
-  import { onMount } from 'svelte';
+    usageCode: `<!-- NumericInput.svelte -->
+<script lang="ts">
+  import { onMount, createEventDispatcher } from 'svelte';
 
+  export let id = '';
+  export let placeholder = '';
+  export let prefix: string | undefined = undefined;
+  export let postfix: string | undefined = undefined;
+  export let percentage: boolean = false;
+  export let min: number | undefined = undefined;
+  export let max: number | undefined = undefined;
+  export let separators: string | undefined = undefined;
+
+  const dispatch = createEventDispatcher<{ storedValueChange: string }>();
   let inputEl: HTMLInputElement;
 
   onMount(() => {
-    inputEl.setAttribute('prefix', '$');
-    inputEl.setAttribute('separators', ',');
-    inputEl.setAttribute('min', '0');
+    if (prefix) inputEl.setAttribute('prefix', prefix);
+    if (postfix) inputEl.setAttribute('postfix', postfix);
+    if (percentage) inputEl.setAttribute('percentage', '');
+    if (separators) inputEl.setAttribute('separators', separators);
+    if (min !== undefined) inputEl.setAttribute('min', String(min));
+    if (max !== undefined) inputEl.setAttribute('max', String(max));
 
     window.NumericInput.attach(inputEl);
 
+    const numericEl = document.getElementById(id + '-numeric');
+    const handler = () => dispatch('storedValueChange', numericEl?.value);
+    numericEl?.addEventListener('input', handler);
+
     return () => {
+      numericEl?.removeEventListener('input', handler);
       window.NumericInput.detach(inputEl);
     };
   });
 </script>
 
-<input bind:this={inputEl} type="text" placeholder="$0.00" />`,
+<input bind:this={inputEl} {id} type="text" {placeholder} />
+
+<!-- Usage -->
+<NumericInput
+  id="currency"
+  prefix="$"
+  separators=","
+  min={0}
+  placeholder="$0.00"
+  on:storedValueChange={(e) => console.log('Stored:', e.detail)}
+/>`,
   },
   {
     id: 'solid',
     name: 'Solid',
     type: 'docs',
     icon: 'solid',
-    usageCode: `import { onMount, onCleanup } from 'solid-js';
+    usageCode: `import { onMount, onCleanup, type Component } from 'solid-js';
 
-function CurrencyInput() {
+interface NumericInputProps {
+  id?: string;
+  placeholder?: string;
+  prefix?: string;
+  percentage?: boolean;
+  separators?: string;
+  min?: number;
+  max?: number;
+  onStoredValueChange?: (value: string) => void;
+}
+
+const NumericInput: Component<NumericInputProps> = (props) => {
   let inputEl: HTMLInputElement | undefined;
 
   onMount(() => {
     if (!inputEl) return;
-    inputEl.setAttribute('prefix', '$');
-    inputEl.setAttribute('separators', ',');
-    inputEl.setAttribute('min', '0');
+    if (props.prefix) inputEl.setAttribute('prefix', props.prefix);
+    if (props.percentage) inputEl.setAttribute('percentage', '');
+    if (props.separators) inputEl.setAttribute('separators', props.separators);
+    if (props.min !== undefined) inputEl.setAttribute('min', String(props.min));
+    if (props.max !== undefined) inputEl.setAttribute('max', String(props.max));
 
     window.NumericInput.attach(inputEl);
+
+    const numericEl = document.getElementById(inputEl.id + '-numeric');
+    const handler = () => props.onStoredValueChange?.(numericEl?.value ?? '');
+    numericEl?.addEventListener('input', handler);
+
+    onCleanup(() => {
+      numericEl?.removeEventListener('input', handler);
+      window.NumericInput.detach(inputEl!);
+    });
   });
 
-  onCleanup(() => {
-    if (inputEl) {
-      window.NumericInput.detach(inputEl);
-    }
-  });
+  return (
+    <input
+      ref={inputEl}
+      id={props.id}
+      type="text"
+      placeholder={props.placeholder}
+    />
+  );
+};
 
-  return <input ref={inputEl} type="text" placeholder="$0.00" />;
-}`,
+// Usage
+<NumericInput
+  id="currency"
+  prefix="$"
+  separators=","
+  min={0}
+  placeholder="$0.00"
+  onStoredValueChange={(v) => console.log('Stored:', v)}
+/>`,
   },
   {
     id: 'qwik',
     name: 'Qwik',
     type: 'docs',
     icon: 'qwik',
-    usageCode: `import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+    usageCode: `import { component$, useSignal, useVisibleTask$, type QRL } from '@builder.io/qwik';
 
-export const CurrencyInput = component$(() => {
+interface NumericInputProps {
+  id?: string;
+  placeholder?: string;
+  prefix?: string;
+  percentage?: boolean;
+  separators?: string;
+  min?: number;
+  max?: number;
+  onStoredValueChange$?: QRL<(value: string) => void>;
+}
+
+export const NumericInput = component$<NumericInputProps>((props) => {
   const inputRef = useSignal<HTMLInputElement>();
 
   useVisibleTask$(({ cleanup }) => {
     const el = inputRef.value;
     if (!el) return;
 
-    el.setAttribute('prefix', '$');
-    el.setAttribute('separators', ',');
-    el.setAttribute('min', '0');
+    if (props.prefix) el.setAttribute('prefix', props.prefix);
+    if (props.percentage) el.setAttribute('percentage', '');
+    if (props.separators) el.setAttribute('separators', props.separators);
+    if (props.min !== undefined) el.setAttribute('min', String(props.min));
+    if (props.max !== undefined) el.setAttribute('max', String(props.max));
 
     window.NumericInput.attach(el);
 
+    const numericEl = document.getElementById(el.id + '-numeric');
+    const handler = () => props.onStoredValueChange$?.(numericEl?.value ?? '');
+    numericEl?.addEventListener('input', handler);
+
     cleanup(() => {
+      numericEl?.removeEventListener('input', handler);
       window.NumericInput.detach(el);
     });
   });
 
-  return <input ref={inputRef} type="text" placeholder="$0.00" />;
-});`,
+  return (
+    <input ref={inputRef} id={props.id} type="text" placeholder={props.placeholder} />
+  );
+});
+
+// Usage
+<NumericInput
+  id="currency"
+  prefix="$"
+  separators=","
+  min={0}
+  placeholder="$0.00"
+  onStoredValueChange$={(v) => console.log('Stored:', v)}
+/>`,
   },
   {
     id: 'astro',
     name: 'Astro',
     type: 'docs',
     icon: 'astro',
-    usageCode: `---
-// CurrencyInput.astro
----
-
-<input
-  id="currency-input"
-  type="text"
-  placeholder="$0.00"
-  prefix="$"
-  separators=","
-  min="0"
-/>
-
-<script>
-  import NumericInput from 'numeric-input';
-
-  const input = document.getElementById('currency-input');
-  if (input) {
-    NumericInput.attach(input);
-  }
-</script>`,
+    usageCode: [
+      '---',
+      '// CurrencyInput.astro',
+      '---',
+      '',
+      '<input',
+      '  id="currency-input"',
+      '  type="text"',
+      '  placeholder="$0.00"',
+      '  prefix="$"',
+      '  separators=","',
+      '  min="0"',
+      '/>',
+      '',
+      '<script>',
+      '  import NumericInput from "numeric-input";',
+      '',
+      '  const input = document.getElementById("currency-input");',
+      '  if (input) {',
+      '    NumericInput.attach(input);',
+      '  }',
+      '</script>',
+      '',
+      '<!-- Percentage input -->',
+      '<input',
+      '  id="tax-rate"',
+      '  type="text"',
+      '  placeholder="0%"',
+      '  percentage',
+      '  min="0"',
+      '  max="100"',
+      '/>',
+      '',
+      '<script>',
+      '  import NumericInput from "numeric-input";',
+      '',
+      '  const input = document.getElementById("tax-rate");',
+      '  if (input) {',
+      '    NumericInput.attach(input);',
+      '  }',
+      '</script>',
+    ].join('\n'),
   },
 ];

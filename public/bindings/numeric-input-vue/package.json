@@ -1,0 +1,13 @@
+{
+  "name": "numeric-input-vue",
+  "version": "1.0.0",
+  "description": "Vue component for NumericInput.js - Advanced numeric input handling",
+  "main": "src/NumericInput.vue",
+  "types": "src/NumericInput.vue",
+  "peerDependencies": {
+    "numeric-input": "^1.0.0",
+    "vue": "^3.0.0"
+  },
+  "keywords": ["numeric-input", "vue", "input", "number", "formatting"],
+  "license": "MIT"
+}

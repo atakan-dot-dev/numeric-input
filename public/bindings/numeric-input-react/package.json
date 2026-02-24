@@ -1,0 +1,14 @@
+{
+  "name": "numeric-input-react",
+  "version": "1.0.0",
+  "description": "React component for NumericInput.js - Advanced numeric input handling",
+  "main": "src/NumericInput.tsx",
+  "types": "src/NumericInput.tsx",
+  "peerDependencies": {
+    "numeric-input": "^1.0.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "keywords": ["numeric-input", "react", "input", "number", "formatting"],
+  "license": "MIT"
+}

@@ -35,10 +35,11 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 - **Syntax Highlighting**: Code blocks with copy functionality
 
 ### Framework Bindings (`public/bindings/`)
-- **React** (`react/useNumericInput.ts`): Hook using useEffect + useRef
-- **Vue** (`vue/useNumericInput.ts`): Composable using onMounted/onUnmounted + ref
-- **Angular** (`angular/numeric-input.directive.ts`): Directive using OnInit/OnDestroy + ElementRef
-- **Svelte, Solid, Qwik, Astro**: Documentation-only with inline code snippets
+- **React** (`numeric-input-react/`): `<NumericInput>` component with typed props, forwardRef, lifecycle management
+- **Vue** (`numeric-input-vue/`): `<NumericInput>` SFC component with props, emits, watchers
+- **Angular** (`numeric-input-angular/`): `<numeric-input>` standalone component with @Input/@Output bindings
+- **Svelte, Solid, Qwik, Astro**: Documentation-only component patterns
+- Each package has `package.json` with `numeric-input` as peer dependency
 
 ## Key Features
 
@@ -100,9 +101,15 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 │   ├── numeric-input.js        # Core library (synced copy)
 │   ├── numeric-input.test.js   # Test suite (synced copy)
 │   └── bindings/
-│       ├── react/useNumericInput.ts
-│       ├── vue/useNumericInput.ts
-│       └── angular/numeric-input.directive.ts
+│       ├── numeric-input-react/
+│       │   ├── package.json
+│       │   └── src/NumericInput.tsx
+│       ├── numeric-input-vue/
+│       │   ├── package.json
+│       │   └── src/NumericInput.vue
+│       └── numeric-input-angular/
+│           ├── package.json
+│           └── src/numeric-input.component.ts
 ├── client/
 │   ├── public/
 │   │   ├── numeric-input.js        # Core library
@@ -162,11 +169,10 @@ The application starts automatically with `npm run dev`. Navigate to the URL sho
 
 **Framework Integration (React):**
 ```typescript
-import { useNumericInput } from './useNumericInput';
+import { NumericInput } from 'numeric-input-react';
 
 function MyInput() {
-  const ref = useNumericInput({ percentage: true, min: 0, max: 100 });
-  return <input ref={ref} type="text" />;
+  return <NumericInput percentage min={0} max={100} placeholder="0%" />;
 }
 ```
 
@@ -238,7 +244,7 @@ function MyInput() {
   - New `InteractiveExampleCard` component with real-time config, auto-generated HTML, stored value display
   - Removed old `ExampleCard` and `ConfigurableExampleCard` components
   - Added "Advanced" attribute tab (value-algebra, percentage, percentage-prefix, increment-start, validation-timeout)
-  - Added framework bindings: React hook, Vue composable, Angular directive (packaged), Svelte/Solid/Qwik/Astro (docs)
+  - Added framework bindings as npm packages: React component, Vue SFC, Angular standalone component; Svelte/Solid/Qwik/Astro (docs)
   - Added "Framework Bindings" section with tabbed code display for 7 frameworks
   - Test suite expanded to ~84 tests across 18 suites (added Value Algebra Tests + Percentage Tests)
   - Updated schema with ExampleControl types for interactive example controls

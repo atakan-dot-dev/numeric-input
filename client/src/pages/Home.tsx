@@ -221,7 +221,7 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
         <div className="space-y-2">
           <h2 className="text-3xl font-bold">Framework Bindings</h2>
           <p className="text-muted-foreground">
-            Ready-to-use bindings for popular frameworks. Copy the binding source into your project or use the inline snippets.
+            Ready-to-use components for popular frameworks. Install the package and use the component directly.
           </p>
         </div>
 
@@ -277,8 +277,8 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
                   <CardTitle className="text-base">Usage</CardTitle>
                   <CardDescription>
                     {fw.type === 'package'
-                      ? `Copy the ${fw.name} binding into your project and use it as shown below.`
-                      : `Integrate NumericInput.js with ${fw.name} using the snippet below.`}
+                      ? `Install the ${fw.name} package and use the component as shown below.`
+                      : `Integrate NumericInput.js with ${fw.name} using the component pattern below.`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -291,7 +291,7 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
                   <CardHeader>
                     <CardTitle className="text-base">Binding Source</CardTitle>
                     <CardDescription>
-                      Full source code for the {fw.name} binding. Copy this file into your project.
+                      Full component source code. Included in the npm package.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
