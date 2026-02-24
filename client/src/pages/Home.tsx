@@ -16,7 +16,7 @@ import {
 } from '@/data/attributes';
 import { testSuites as initialTestSuites } from '@/data/tests';
 import { frameworkBindings } from '@/data/frameworkBindings';
-import { Terminal, Zap, Shield, Globe, Package, FileText } from 'lucide-react';
+import { Terminal, Zap, Shield, Globe, Package, FileText, Layers, Info } from 'lucide-react';
 import { SiReact, SiVuedotjs, SiAngular, SiSvelte, SiSolid, SiQwik, SiAstro } from 'react-icons/si';
 import { loadNumericInputScript } from '@/hooks/useNumericInput';
 import { useTestRunner } from '@/hooks/useTestRunner';
@@ -80,29 +80,7 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-          <Card>
-            <CardHeader className="space-y-2">
-              <Terminal className="w-8 h-8 text-primary" />
-              <CardTitle className="text-base">Multi-Base Support</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Binary, octal, decimal, hexadecimal, and any base from 2 to 36
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="space-y-2">
-              <Globe className="w-8 h-8 text-primary" />
-              <CardTitle className="text-base">Locale Aware</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Automatic formatting based on locale with custom separator support
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
           <Card>
             <CardHeader className="space-y-2">
               <Shield className="w-8 h-8 text-primary" />
@@ -110,7 +88,7 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Prevent invalid keystrokes, enforce ranges, and validate increments
+                Prevent invalid keystrokes before they're entered, enforce min/max ranges, and validate increments with configurable debounce
               </p>
             </CardContent>
           </Card>
@@ -121,7 +99,29 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Simple attach/detach API with React, Vue, and Svelte wrappers
+                Simple vanilla JS attach/detach API with React, Vue, Angular, Svelte, and more framework bindings
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="space-y-2">
+              <Globe className="w-8 h-8 text-primary" />
+              <CardTitle className="text-base">Locale Aware</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Automatic formatting based on locale with custom separator support via the browser Intl API
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="space-y-2">
+              <Layers className="w-8 h-8 text-primary" />
+              <CardTitle className="text-base">Rich Feature Set</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Multi-base support (2-36), floating point precision and rounding, currencies with prefix/postfix, percentage shorthands, and value-algebra transformations
               </p>
             </CardContent>
           </Card>
@@ -382,6 +382,30 @@ NumericInput.handleArrowKey(direction, currentValue, config);`;
             </CardContent>
           </Card>
         </div>
+      </section>
+      {/* About This Project */}
+      <section id="about" className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold">About This Project</h2>
+        </div>
+
+        <Card>
+          <CardHeader className="space-y-2">
+            <Info className="w-8 h-8 text-primary" />
+            <CardTitle>An AI-Assisted Development Experiment</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              NumericInput.js is an experiment in replicating the feature set of a React library that I, a developer with three decades of experience, had previously created by hand. This time, the entire codebase was built using AI tools without any manual coding — just a couple of thorough human code reviews before publishing to GitHub.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              I started this project about four months ago but paused early on because it felt like I had to babysit the AI too much — constantly correcting course and re-explaining intent. When I returned to it in late February, two things had changed: I had learned to use structured planning to guide the AI more effectively, and the models themselves had improved significantly. The combination made the process feel genuinely satisfying rather than frustrating.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              The result is a fully framework-agnostic vanilla JavaScript library with comprehensive test coverage, interactive documentation, and ready-to-use framework bindings — all produced through human-AI collaboration where the human provides direction and review, and the AI handles implementation.
+            </p>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

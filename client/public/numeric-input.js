@@ -93,6 +93,12 @@
         }
       }
 
+      const rawArrows = element.getAttribute('arrows');
+      config.arrows = 'always';
+      if (rawArrows === 'never' || rawArrows === 'focus') {
+        config.arrows = rawArrows;
+      }
+
       if (element.hasAttribute('percentage')) {
         if (!config.postfix) config.postfix = '%';
         if (!config.valueAlgebra) {
@@ -903,7 +909,78 @@
         originalInput.setAttribute('tabindex', '-1');
         originalInput.setAttribute('aria-hidden', 'true');
 
-        originalInput.parentNode.insertBefore(displayInput, originalInput.nextSibling);
+        let arrowContainer = null;
+        if (config.arrows !== 'never') {
+          const wrapper = document.createElement('div');
+          wrapper.style.position = 'relative';
+          wrapper.style.display = 'inline-block';
+          wrapper.style.width = '100%';
+
+          originalInput.parentNode.insertBefore(wrapper, originalInput.nextSibling);
+          wrapper.appendChild(displayInput);
+
+          arrowContainer = document.createElement('div');
+          arrowContainer.setAttribute('data-numeric-arrows', '');
+          arrowContainer.style.position = 'absolute';
+          arrowContainer.style.right = '2px';
+          arrowContainer.style.top = '50%';
+          arrowContainer.style.transform = 'translateY(-50%)';
+          arrowContainer.style.display = 'flex';
+          arrowContainer.style.flexDirection = 'column';
+          arrowContainer.style.gap = '0px';
+          arrowContainer.style.zIndex = '1';
+
+          if (config.arrows === 'focus') {
+            arrowContainer.style.opacity = '0';
+            arrowContainer.style.pointerEvents = 'none';
+            arrowContainer.style.transition = 'opacity 0.15s';
+          }
+
+          const btnStyle = 'border:none;background:transparent;cursor:pointer;padding:0 4px;line-height:1;font-size:8px;color:inherit;opacity:0.5;display:flex;align-items:center;';
+          const upBtn = document.createElement('button');
+          upBtn.type = 'button';
+          upBtn.setAttribute('tabindex', '-1');
+          upBtn.setAttribute('aria-label', 'Increment');
+          upBtn.style.cssText = btnStyle;
+          upBtn.innerHTML = '&#9650;';
+          upBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            this.handleKeyDown({ key: 'ArrowUp', preventDefault: ()=>{}, stopPropagation: ()=>{} }, originalInput, displayInput, config);
+          });
+          upBtn.addEventListener('mouseover', () => { upBtn.style.opacity = '1'; });
+          upBtn.addEventListener('mouseout', () => { upBtn.style.opacity = '0.5'; });
+
+          const downBtn = document.createElement('button');
+          downBtn.type = 'button';
+          downBtn.setAttribute('tabindex', '-1');
+          downBtn.setAttribute('aria-label', 'Decrement');
+          downBtn.style.cssText = btnStyle;
+          downBtn.innerHTML = '&#9660;';
+          downBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            this.handleKeyDown({ key: 'ArrowDown', preventDefault: ()=>{}, stopPropagation: ()=>{} }, originalInput, displayInput, config);
+          });
+          downBtn.addEventListener('mouseover', () => { downBtn.style.opacity = '1'; });
+          downBtn.addEventListener('mouseout', () => { downBtn.style.opacity = '0.5'; });
+
+          arrowContainer.appendChild(upBtn);
+          arrowContainer.appendChild(downBtn);
+          wrapper.appendChild(arrowContainer);
+          displayInput.style.paddingRight = '20px';
+
+          if (config.arrows === 'focus') {
+            displayInput.addEventListener('focus', () => {
+              arrowContainer.style.opacity = '1';
+              arrowContainer.style.pointerEvents = 'auto';
+            });
+            displayInput.addEventListener('blur', () => {
+              arrowContainer.style.opacity = '0';
+              arrowContainer.style.pointerEvents = 'none';
+            });
+          }
+        } else {
+          originalInput.parentNode.insertBefore(displayInput, originalInput.nextSibling);
+        }
 
         if (originalInput.value) {
           const parsed = this.parseValue(originalInput.value, config);
@@ -954,7 +1031,12 @@
         displayInput.removeEventListener('input', inputHandler);
         displayInput.removeEventListener('paste', pasteHandler);
 
-        if (displayInput.parentNode) {
+        const wrapper = displayInput.parentNode;
+        if (wrapper && wrapper.hasAttribute && wrapper.querySelector && wrapper.querySelector('[data-numeric-arrows]')) {
+          if (wrapper.parentNode) {
+            wrapper.parentNode.removeChild(wrapper);
+          }
+        } else if (displayInput.parentNode) {
           displayInput.parentNode.removeChild(displayInput);
         }
 

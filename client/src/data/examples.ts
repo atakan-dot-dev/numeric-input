@@ -19,6 +19,12 @@ const caseOptions = [
   { label: 'Lowercase', value: 'lower' },
 ];
 
+const arrowsOptions = [
+  { label: 'Always', value: 'always' },
+  { label: 'Never', value: 'never' },
+  { label: 'On Focus', value: 'focus' },
+];
+
 const separatorOptions = [
   { label: 'None', value: 'none' },
   { label: 'Locale', value: 'locale' },
@@ -79,9 +85,12 @@ export const examples: ExampleConfig[] = [
     category: 'Formatting',
     config: { prefix: '$', decimal: '.', separators: ',', min: 0 },
     controls: [
+      { type: 'switch-label', key: 'prefix', altKey: 'postfix', leftLabel: 'Prefix', rightLabel: 'Postfix' },
       { type: 'input', key: 'prefix', label: 'Prefix', inputType: 'text', placeholder: '$' },
+      { type: 'input', key: 'postfix', label: 'Postfix', inputType: 'text', placeholder: 'USD' },
       { type: 'select', key: 'separators', label: 'Separators', options: separatorOptions },
       { type: 'select', key: 'decimal', label: 'Decimal', options: decimalOptions },
+      { type: 'input', key: 'keyIncrement', label: 'Key Increment', inputType: 'number', placeholder: '1' },
       { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
       { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
       { type: 'input', key: 'validIncrement', label: 'Valid Increment', inputType: 'number', placeholder: '0.01' },
@@ -94,8 +103,7 @@ export const examples: ExampleConfig[] = [
     category: 'Formatting',
     config: { percentage: true, min: 0, max: 100 },
     controls: [
-      { type: 'toggle', key: 'percentage', label: 'Percentage (postfix %)' },
-      { type: 'toggle', key: 'percentagePrefix', label: 'Percentage Prefix (prefix %)' },
+      { type: 'switch-label', key: 'percentage', altKey: 'percentagePrefix', leftLabel: 'Prefix', rightLabel: 'Postfix' },
       { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
       { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
     ],
@@ -115,13 +123,14 @@ export const examples: ExampleConfig[] = [
   {
     id: 'display',
     title: 'Display Options',
-    description: 'Configure prefix, postfix, and sign display',
+    description: 'Configure prefix, postfix, sign display, and arrow visibility',
     category: 'Display',
     config: { postfix: '°C', showPlus: true },
     controls: [
       { type: 'input', key: 'prefix', label: 'Prefix', inputType: 'text', placeholder: 'None' },
       { type: 'input', key: 'postfix', label: 'Postfix', inputType: 'text', placeholder: 'None' },
       { type: 'toggle', key: 'showPlus', label: 'Show Plus (+)' },
+      { type: 'select', key: 'arrows', label: 'Arrows', options: arrowsOptions },
       { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
       { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
     ],
@@ -188,6 +197,7 @@ export const examples: ExampleConfig[] = [
       { type: 'select', key: 'locale', label: 'Locale', options: localeOptions },
       { type: 'toggle', key: 'percentage', label: 'Percentage' },
       { type: 'input', key: 'valueAlgebra', label: 'Value Algebra', inputType: 'text', placeholder: 'e.g. x*0.01' },
+      { type: 'select', key: 'arrows', label: 'Arrows', options: arrowsOptions },
     ],
   },
 ];

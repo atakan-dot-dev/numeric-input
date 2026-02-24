@@ -715,4 +715,39 @@ export const testSuites: TestSuite[] = [
       },
     ],
   },
+  {
+    id: 'arrows',
+    name: 'Arrow Button Tests',
+    description: 'Tests for arrow button visibility attribute',
+    tests: [
+      {
+        id: 'arr-1',
+        name: 'arrows defaults to always',
+        description: 'Default arrows config should be always',
+        category: 'arrows',
+        status: 'pending',
+      },
+      {
+        id: 'arr-2',
+        name: 'arrows=never hides arrows',
+        description: 'arrows=never should be parsed correctly',
+        category: 'arrows',
+        status: 'pending',
+      },
+      {
+        id: 'arr-3',
+        name: 'arrows=focus shows arrows on focus only',
+        description: 'arrows=focus should be parsed correctly',
+        category: 'arrows',
+        status: 'pending',
+      },
+      {
+        id: 'arr-4',
+        name: 'invalid arrows value defaults to always',
+        description: 'Invalid arrows value should fallback to always',
+        category: 'arrows',
+        status: 'pending',
+      },
+    ],
+  },
 ];

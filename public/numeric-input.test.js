@@ -1073,6 +1073,28 @@ TestRunner.suite('Percentage Tests', () => {
   });
 });
 
+TestRunner.suite('Arrow Button Tests', () => {
+  TestRunner.test('arrows defaults to always', () => {
+    const config = NumericInput.parseConfig(createMockInput({}));
+    assertEqual(config.arrows, 'always', 'Default arrows should be always');
+  });
+
+  TestRunner.test('arrows=never hides arrows', () => {
+    const config = NumericInput.parseConfig(createMockInput({ arrows: 'never' }));
+    assertEqual(config.arrows, 'never', 'Should parse arrows=never');
+  });
+
+  TestRunner.test('arrows=focus shows arrows on focus only', () => {
+    const config = NumericInput.parseConfig(createMockInput({ arrows: 'focus' }));
+    assertEqual(config.arrows, 'focus', 'Should parse arrows=focus');
+  });
+
+  TestRunner.test('invalid arrows value defaults to always', () => {
+    const config = NumericInput.parseConfig(createMockInput({ arrows: 'invalid' }));
+    assertEqual(config.arrows, 'always', 'Invalid value should default to always');
+  });
+});
+
 // Export for use in browser and Node
 if (typeof window !== 'undefined') {
   window.TestRunner = TestRunner;

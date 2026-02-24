@@ -22,14 +22,15 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 - **Comprehensive Coverage**: Tests for all attributes and behaviors
 - **Simple Test Runner**: Custom lightweight test framework
 - **Browser Compatible**: Runs directly in the browser
-- **18 Test Suites**: Validation, Formatting, Display, Keystroke, Edge Cases, Locale, Arrow Key Modifiers, Paste Filtering, Floating Point Precision, Increment Start, Non-Base-10 Increments, Postfix Display, Range Constraints, European Format, Precision Preservation, Validation Timeout, Value Algebra, Percentage
-- **~84 Test Cases**: Covering all functionality including value-algebra and percentage tests
+- **19 Test Suites**: Validation, Formatting, Display, Keystroke, Edge Cases, Locale, Arrow Key Modifiers, Paste Filtering, Floating Point Precision, Increment Start, Non-Base-10 Increments, Postfix Display, Range Constraints, European Format, Precision Preservation, Validation Timeout, Value Algebra, Percentage, Arrow Buttons
+- **~88 Test Cases**: Covering all functionality including value-algebra, percentage, and arrow button tests
 
 ### Demo Application (React + TypeScript)
 - **Sidebar Navigation**: Easy access to all sections including Framework Bindings
 - **Dark/Light Mode**: Full theme support with toggle
 - **Attribute Reference**: Comprehensive documentation with 5 tabs (Validation, Formatting, Display, Locale, Advanced)
-- **10 Interactive Examples**: Configurable controls (selects, inputs, toggles) for real-time attribute experimentation
+- **10 Interactive Examples**: Configurable controls (selects, inputs, toggles, switch-labels) for real-time attribute experimentation
+- **About Section**: Project background describing AI-assisted development experiment
 - **Framework Bindings**: Code examples for 7 frameworks (React, Vue, Angular, Svelte, Solid, Qwik, Astro)
 - **Integrated Test Runner**: Run and view test results in the UI
 - **Syntax Highlighting**: Code blocks with copy functionality
@@ -44,7 +45,7 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 ## Key Features
 
 ### Interactive Examples
-- **10 Interactive Examples**: Each with configurable controls (selects, inputs, toggles)
+- **10 Interactive Examples**: Each with configurable controls (selects, inputs, toggles, switch-labels)
   - Basic Number, Range & Increments, Currency, Percentage, Number Base, Display Options, Locale & Format, Value Algebra, Precision, Full Config Playground
 - **Real-time Configuration**: Adjust any attribute and see behavior change instantly
 - **Auto-generated HTML**: Code block updates as controls change
@@ -71,6 +72,7 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 - `show-plus`: Display + for positive numbers
 - `prefix`: String before number (e.g., "$")
 - `postfix`: String after number (e.g., "%")
+- `arrows`: Arrow button visibility (always/never/focus) — custom increment/decrement buttons
 
 **Locale:**
 - `locale`: Intl.Locale value for formatting
@@ -93,6 +95,7 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 6. **Debounced Validation**: Increment constraints use configurable timeout (default 500ms)
 7. **Precision Preservation**: Arrow key increments with integer steps preserve user-typed decimal places
 8. **Value Algebra**: Algebraic expressions transform display values to stored values safely
+9. **Custom Arrow Buttons**: Configurable increment/decrement buttons (always/never/focus visibility)
 
 ## File Structure
 
@@ -113,7 +116,7 @@ A comprehensive demo application showcasing NumericInput.js, a powerful, framewo
 ├── client/
 │   ├── public/
 │   │   ├── numeric-input.js        # Core library
-│   │   └── numeric-input.test.js   # Test suite (~84 tests)
+│   │   └── numeric-input.test.js   # Test suite (~88 tests)
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── AppSidebar.tsx              # Navigation sidebar
@@ -220,6 +223,7 @@ function MyInput() {
 - Validation timeout (debounced increment snapping)
 - Value algebra (expression parser, functions, security)
 - Percentage shorthands (percentage, percentage-prefix)
+- Arrow buttons (always/never/focus visibility modes)
 
 ## Browser Compatibility
 - Chrome/Edge: Full support
@@ -246,8 +250,16 @@ function MyInput() {
   - Added "Advanced" attribute tab (value-algebra, percentage, percentage-prefix, increment-start, validation-timeout)
   - Added framework bindings as npm packages: React component, Vue SFC, Angular standalone component; Svelte/Solid/Qwik/Astro (docs)
   - Added "Framework Bindings" section with tabbed code display for 7 frameworks
-  - Test suite expanded to ~84 tests across 18 suites (added Value Algebra Tests + Percentage Tests)
-  - Updated schema with ExampleControl types for interactive example controls
+  - Test suite expanded to ~88 tests across 19 suites (added Value Algebra, Percentage, Arrow Button tests)
+  - Updated schema with ExampleControl types for interactive example controls (including switch-label)
+- **UI Enhancements (Latest)**:
+  - Added `arrows` attribute (always/never/focus) with custom increment/decrement buttons in core library
+  - Custom arrow buttons use wrapper div with absolute positioning and opacity/pointer-events for focus visibility
+  - Added `switch-label` control type for exclusive prefix/postfix toggles (used in Percentage and Currency examples)
+  - Currency example enhanced with prefix/postfix switch, separate text inputs, and key-increment control
+  - Reordered feature boxes: Smart Validation, Easy Integration, Locale Aware, Rich Feature Set (2-column layout)
+  - Added "About This Project" section describing AI-assisted development experiment
+  - Added "About" link to sidebar navigation
 
 ## Known Limitations
 1. Non-base-10 decimal handling is simplified (integer part only)

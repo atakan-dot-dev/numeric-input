@@ -1,4 +1,4 @@
-import { Home, Book, Code2, TestTube2, Settings, Github, Blocks } from 'lucide-react';
+import { Home, Book, Code2, TestTube2, Settings, Github, Blocks, Info } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -43,6 +43,11 @@ const navigationItems = [
     title: 'API Reference',
     icon: Book,
     id: 'api',
+  },
+  {
+    title: 'About',
+    icon: Info,
+    id: 'about',
   },
 ];
 

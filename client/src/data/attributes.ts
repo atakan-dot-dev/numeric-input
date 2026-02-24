@@ -102,6 +102,14 @@ export const displayAttributes: AttributeDefinition[] = [
     description: 'Fixed string displayed after the number.',
     example: 'postfix=" USD"',
   },
+  {
+    name: 'arrows',
+    type: 'string',
+    description: 'Controls visibility of increment/decrement arrow buttons. "always" shows arrows at all times, "focus" shows them only when the input is focused, "never" hides them entirely.',
+    defaultValue: 'always',
+    possibleValues: ['always', 'never', 'focus'],
+    example: 'arrows="focus"',
+  },
 ];
 
 export const localeAttributes: AttributeDefinition[] = [

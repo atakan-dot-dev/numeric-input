@@ -24,6 +24,7 @@ function configToHtml(config: Partial<NumericInputConfig>): string {
     valueAlgebra: 'value-algebra',
     validationTimeout: 'validation-timeout',
     percentagePrefix: 'percentage-prefix',
+    arrows: 'arrows',
   };
 
   for (const [key, value] of Object.entries(config)) {
@@ -33,6 +34,7 @@ function configToHtml(config: Partial<NumericInputConfig>): string {
     if (key === 'decimal' && value === 'locale') continue;
     if (key === 'base' && value === 10) continue;
     if (key === 'letterCase' && value === 'upper') continue;
+    if (key === 'arrows' && value === 'always') continue;
 
     const attrName = keyMap[key] || key;
 
@@ -73,12 +75,6 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
       } else {
         (next as any)[key] = value;
       }
-      if (key === 'percentage' && value === true) {
-        delete (next as any).percentagePrefix;
-      }
-      if (key === 'percentagePrefix' && value === true) {
-        delete (next as any).percentage;
-      }
       return next;
     });
   }, []);
@@ -91,7 +87,7 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
       'prefix', 'postfix', 'separators', 'decimal', 'min', 'max',
       'valid-increment', 'key-increment', 'base', 'radix', 'letter-case',
       'sign', 'locale', 'integer', 'show-plus', 'increment-start',
-      'validation-timeout', 'value-algebra', 'percentage', 'percentage-prefix'
+      'validation-timeout', 'value-algebra', 'percentage', 'percentage-prefix', 'arrows'
     ];
 
     if (attachedRef.current) {
@@ -138,13 +134,66 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
     };
   }, [example.id, config, scriptLoaded]);
 
-  const renderControl = (control: ExampleControl) => {
+  const renderControl = (control: ExampleControl, idx: number) => {
     const key = control.key;
     const currentVal = (config as any)[key];
 
+    if (control.type === 'switch-label') {
+      const keyVal = (config as any)[control.key];
+      const altVal = (config as any)[control.altKey];
+      const isKeyActive = keyVal !== undefined && keyVal !== null && keyVal !== '' && keyVal !== false;
+      return (
+        <div key={`${control.type}-${idx}`} className="col-span-2 space-y-1" data-testid={`control-${example.id}-${control.key}-switch`}>
+          <Label className="text-xs invisible select-none" aria-hidden="true">&zwj;</Label>
+          <div className="flex items-center justify-center gap-3 h-8">
+            <Label
+              className={`text-xs cursor-pointer transition-colors ${!isKeyActive ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
+              htmlFor={`ctrl-${example.id}-${control.key}-switch`}
+            >
+              {control.leftLabel}
+            </Label>
+            <Switch
+              id={`ctrl-${example.id}-${control.key}-switch`}
+              checked={isKeyActive}
+              onCheckedChange={(checked) => {
+                setConfig(prev => {
+                  const next = { ...prev };
+                  if (checked) {
+                    const prevAlt = (prev as any)[control.altKey];
+                    delete (next as any)[control.altKey];
+                    if (typeof prevAlt === 'string') {
+                      (next as any)[control.key] = prevAlt;
+                    } else {
+                      (next as any)[control.key] = true;
+                    }
+                  } else {
+                    const prevKey = (prev as any)[control.key];
+                    delete (next as any)[control.key];
+                    if (typeof prevKey === 'string') {
+                      (next as any)[control.altKey] = prevKey;
+                    } else {
+                      (next as any)[control.altKey] = true;
+                    }
+                  }
+                  return next;
+                });
+              }}
+              data-testid={`switch-${example.id}-${control.key}`}
+            />
+            <Label
+              className={`text-xs cursor-pointer transition-colors ${isKeyActive ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
+              htmlFor={`ctrl-${example.id}-${control.key}-switch`}
+            >
+              {control.rightLabel}
+            </Label>
+          </div>
+        </div>
+      );
+    }
+
     if (control.type === 'toggle') {
       return (
-        <div key={key} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
+        <div key={`${control.type}-${idx}`} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
           <Label className="text-xs invisible select-none" aria-hidden="true">&zwj;</Label>
           <div className="flex items-center justify-between gap-2 h-8">
             <Label className="text-xs cursor-pointer" htmlFor={`ctrl-${example.id}-${key}`}>{control.label}</Label>
@@ -161,7 +210,7 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
 
     if (control.type === 'select') {
       return (
-        <div key={key} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
+        <div key={`${control.type}-${idx}`} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
           <Label className="text-xs" htmlFor={`ctrl-${example.id}-${key}`}>{control.label}</Label>
           <Select
             value={currentVal !== undefined ? String(currentVal) : control.options[0]?.value}
@@ -190,7 +239,7 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
 
     if (control.type === 'input') {
       return (
-        <div key={key} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
+        <div key={`${control.type}-${idx}`} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
           <Label className="text-xs" htmlFor={`ctrl-${example.id}-${key}`}>{control.label}</Label>
           <Input
             id={`ctrl-${example.id}-${key}`}
@@ -240,7 +289,7 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
               Configuration
             </h4>
             <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-              {example.controls.map(renderControl)}
+              {example.controls.map((ctrl, idx) => renderControl(ctrl, idx))}
             </div>
           </div>
         )}
