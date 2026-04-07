@@ -90,7 +90,7 @@ export const examples: ExampleConfig[] = [
     category: 'Formatting',
     config: { prefix: '$', decimal: '.', separators: ',', min: 0 },
     controls: [
-      { type: 'switch-label-input', key: 'postfix', altKey: 'prefix', leftLabel: 'Prefix', rightLabel: 'Postfix', leftPlaceholder: '$', rightPlaceholder: 'USD' },
+      { type: 'switch-label-input', key: 'postfix', altKey: 'prefix', leftLabel: 'Prefix', rightLabel: 'Postfix', leftPlaceholder: '$', rightPlaceholder: ' USD' },
       { type: 'select', key: 'separators', label: 'Separators', options: separatorOptions },
       { type: 'select', key: 'decimal', label: 'Decimal', options: decimalOptions },
       { type: 'input', key: 'keyIncrement', label: 'Key Increment', inputType: 'number', placeholder: '1' },

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Check, X, Clock, ChevronDown, ChevronRight } from 'lucide-react';
+import { Play, Check, X, Clock, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { TestSuite, TestCase } from '@shared/schema';
 
@@ -57,6 +57,9 @@ export function TestRunner({ suites: initialSuites, onRunTests, isRunning = fals
     (sum, suite) => sum + suite.tests.filter(t => t.status === 'failed').length,
     0
   );
+  const hasRun = suites.some(s => s.tests.some(t => t.status !== 'pending'));
+  const allPassed = hasRun && passedTests === totalTests && failedTests === 0;
+  const hasFailed = hasRun && failedTests > 0;
 
   const getStatusIcon = (status: TestCase['status']) => {
     switch (status) {
@@ -113,9 +116,24 @@ export function TestRunner({ suites: initialSuites, onRunTests, isRunning = fals
               onClick={handleRunTests}
               disabled={isRunning}
               data-testid="button-run-tests"
+              variant={allPassed ? 'outline' : hasFailed ? 'outline' : 'default'}
             >
-              <Play className="w-4 h-4 mr-2" />
-              {isRunning ? 'Running...' : 'Run All Tests'}
+              {isRunning ? (
+                <Clock className="w-4 h-4 mr-2 animate-spin" />
+              ) : allPassed ? (
+                <Check className="w-4 h-4 mr-2 text-chart-2" />
+              ) : hasFailed ? (
+                <AlertCircle className="w-4 h-4 mr-2 text-destructive" />
+              ) : (
+                <Play className="w-4 h-4 mr-2" />
+              )}
+              {isRunning
+                ? 'Running...'
+                : allPassed
+                ? `All ${totalTests} Passed`
+                : hasFailed
+                ? `${failedTests} Failed`
+                : 'Run All Tests'}
             </Button>
           </div>
         </CardHeader>
@@ -155,9 +173,32 @@ export function TestRunner({ suites: initialSuites, onRunTests, isRunning = fals
                         <CardDescription className="text-sm">{suite.description}</CardDescription>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {suite.tests.length} tests
-                    </Badge>
+                    {(() => {
+                      const suiteHasRun = suite.tests.some(t => t.status !== 'pending');
+                      const suitePassed = suite.tests.filter(t => t.status === 'passed').length;
+                      const suiteFailed = suite.tests.filter(t => t.status === 'failed').length;
+                      if (!suiteHasRun) {
+                        return (
+                          <Badge variant="secondary" className="text-xs">
+                            {suite.tests.length} tests
+                          </Badge>
+                        );
+                      }
+                      if (suiteFailed === 0) {
+                        return (
+                          <Badge variant="outline" className="text-xs border-chart-2 text-chart-2 gap-1">
+                            <Check className="w-3 h-3" />
+                            {suitePassed}/{suite.tests.length}
+                          </Badge>
+                        );
+                      }
+                      return (
+                        <Badge variant="outline" className="text-xs border-destructive text-destructive gap-1">
+                          <X className="w-3 h-3" />
+                          {suiteFailed} failed
+                        </Badge>
+                      );
+                    })()}
                   </div>
                 </CollapsibleTrigger>
               </CardHeader>
