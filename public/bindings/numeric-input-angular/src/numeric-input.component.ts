@@ -127,10 +127,11 @@ export class NumericInputComponent implements AfterViewInit, OnDestroy, OnChange
       }
     }
 
+    const originalId = el.id;
     window.NumericInput.attach(el);
     this.attached = true;
 
-    const numericId = el.id ? `${el.id}-numeric` : null;
+    const numericId = originalId ? `${originalId}-numeric` : null;
     this.numericEl = numericId
       ? (document.getElementById(numericId) as HTMLInputElement)
       : null;

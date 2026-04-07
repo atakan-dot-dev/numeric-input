@@ -93,11 +93,13 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
         }
       }
 
+      const originalId = el.id;
       window.NumericInput.attach(el);
       attachedRef.current = true;
 
-      const numericId = el.id ? `${el.id}-numeric` : null;
+      const numericId = originalId ? `${originalId}-numeric` : null;
       const numericEl = numericId ? document.getElementById(numericId) as HTMLInputElement : null;
+      const displayEl = originalId ? document.getElementById(originalId) as HTMLInputElement : null;
 
       const handler = () => {
         if (numericEl && onStoredValueChange) {
@@ -105,12 +107,16 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
         }
       };
 
+      if (displayEl) {
+        displayEl.addEventListener('input', handler);
+        handler();
+      }
       if (numericEl) {
         numericEl.addEventListener('input', handler);
-        handler();
       }
 
       return () => {
+        if (displayEl) displayEl.removeEventListener('input', handler);
         if (numericEl) numericEl.removeEventListener('input', handler);
         if (attachedRef.current) {
           window.NumericInput.detach(el);

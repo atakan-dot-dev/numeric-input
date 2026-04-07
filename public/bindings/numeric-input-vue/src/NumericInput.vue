@@ -95,10 +95,11 @@ function applyConfig() {
     }
   }
 
+  const originalId = el.id;
   window.NumericInput.attach(el);
   attached = true;
 
-  const numericId = el.id ? `${el.id}-numeric` : null;
+  const numericId = originalId ? `${originalId}-numeric` : null;
   const numericEl = numericId
     ? (document.getElementById(numericId) as HTMLInputElement)
     : null;

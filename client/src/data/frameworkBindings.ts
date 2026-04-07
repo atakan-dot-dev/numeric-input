@@ -138,10 +138,11 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
         }
       }
 
+      const originalId = el.id;
       window.NumericInput.attach(el);
       attachedRef.current = true;
 
-      const numericId = el.id ? el.id + '-numeric' : null;
+      const numericId = originalId ? originalId + '-numeric' : null;
       const numericEl = numericId
         ? document.getElementById(numericId) as HTMLInputElement
         : null;
@@ -322,10 +323,11 @@ function applyConfig() {
     }
   }
 
+  const originalId = el.id;
   window.NumericInput.attach(el);
   attached = true;
 
-  const numericId = el.id ? el.id + '-numeric' : null;
+  const numericId = originalId ? originalId + '-numeric' : null;
   const numericEl = numericId
     ? (document.getElementById(numericId) as HTMLInputElement)
     : null;
@@ -541,10 +543,11 @@ export class NumericInputComponent
       }
     }
 
+    const originalId = el.id;
     window.NumericInput.attach(el);
     this.attached = true;
 
-    const numericId = el.id ? el.id + '-numeric' : null;
+    const numericId = originalId ? originalId + '-numeric' : null;
     this.numericEl = numericId
       ? (document.getElementById(numericId) as HTMLInputElement)
       : null;

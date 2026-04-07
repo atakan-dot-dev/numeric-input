@@ -17,9 +17,9 @@ I prefer detailed explanations and thorough documentation. I appreciate clear ar
 
 ### Demo Application (React + TypeScript)
 - **UI/UX**: Features a sidebar for navigation, dark/light mode theming, and syntax highlighting for code blocks. The design uses a developer tool aesthetic (Linear/Vercel inspired color palette), Inter for UI typography, and JetBrains Mono for code.
-- **Interactive Examples**: 12 configurable examples demonstrate attributes with real-time feedback, auto-generated HTML, and stored value display.
-- **Documentation**: Comprehensive attribute reference across five categories (Validation, Formatting, Display, Locale, Advanced).
-- **Integrated Test Runner**: Allows direct execution and viewing of test results within the UI.
+- **Interactive Examples**: 12 configurable examples (Basic Number, Range & Increments, Currency, Percentage, Decimal Keys, Smart Paste, Number Base, Display Options, Locale & Format, Value Algebra, Precision, Full Config Playground) each with live controls that update the input behavior in real-time. Positive-only numeric controls (increment, timeout) use the React binding component to enforce the `sign="positive"` constraint.
+- **Documentation**: Comprehensive attribute reference across five categories (Validation, Formatting, Display, Locale, Advanced). Includes `value-algebra`, `percentage`, and `percentage-prefix` attributes.
+- **Integrated Test Runner**: 105 tests across 21 suites, with per-suite pass/fail badges and aggregated run status.
 
 ### Framework Bindings (`public/bindings/`)
 - **Modular Components**: Provides dedicated components for React, Vue, and Angular, with `numeric-input` as a peer dependency.

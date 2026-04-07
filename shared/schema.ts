@@ -83,6 +83,7 @@ export const exampleControlSchema = z.discriminatedUnion('type', [
     label: z.string(),
     inputType: z.enum(['text', 'number']).default('text'),
     placeholder: z.string().optional(),
+    sign: z.enum(['any', 'positive', 'negative']).optional(),
   }),
   z.object({
     type: z.literal('toggle'),

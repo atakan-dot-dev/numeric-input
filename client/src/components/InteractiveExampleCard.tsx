@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NumericInput as NumericInputControl } from '../../../public/bindings/numeric-input-react/src/NumericInput';
 import type { ExampleConfig, NumericInputConfig, ExampleControl } from '@shared/schema';
 
 interface InteractiveExampleCardProps {
@@ -113,6 +114,7 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
     attachedRef.current = true;
 
     const originalInput = document.getElementById(`demo-${example.id}-numeric`) as HTMLInputElement;
+    const displayInput = document.getElementById(`demo-${example.id}`) as HTMLInputElement;
 
     const handleInput = () => {
       if (originalInput) {
@@ -120,12 +122,18 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
       }
     };
 
+    if (displayInput) {
+      displayInput.addEventListener('input', handleInput);
+      handleInput();
+    }
     if (originalInput) {
       originalInput.addEventListener('input', handleInput);
-      handleInput();
     }
 
     return () => {
+      if (displayInput) {
+        displayInput.removeEventListener('input', handleInput);
+      }
       if (originalInput) {
         originalInput.removeEventListener('input', handleInput);
       }
@@ -312,6 +320,27 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
     }
 
     if (control.type === 'input') {
+      if (control.inputType === 'number' && control.sign) {
+        return (
+          <div key={`${control.type}-${idx}`} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
+            <Label className="text-xs" htmlFor={`ctrl-${example.id}-${key}`}>{control.label}</Label>
+            <NumericInputControl
+              key={`${key}-${scriptLoaded}`}
+              id={`ctrl-${example.id}-${key}`}
+              sign={control.sign}
+              defaultValue={currentVal !== undefined ? String(currentVal) : ''}
+              placeholder={control.placeholder}
+              onStoredValueChange={(val) => {
+                const num = parseFloat(val);
+                updateConfig(key, isNaN(num) ? undefined : num);
+              }}
+              className="w-full h-8 px-3 text-xs font-mono rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid={`input-ctrl-${example.id}-${key}`}
+            />
+          </div>
+        );
+      }
+
       return (
         <div key={`${control.type}-${idx}`} className="space-y-1" data-testid={`control-${example.id}-${key}`}>
           <Label className="text-xs" htmlFor={`ctrl-${example.id}-${key}`}>{control.label}</Label>
