@@ -3,7 +3,10 @@ import type { NumericInputConfig } from '@shared/schema';
 
 declare global {
   interface Window {
-    NumericInput: any;
+    NumericInput: {
+      attach(el: HTMLElement): void;
+      detach(el: HTMLElement): void;
+    };
   }
 }
 
