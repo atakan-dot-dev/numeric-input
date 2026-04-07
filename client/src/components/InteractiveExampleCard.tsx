@@ -227,13 +227,15 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
                 setConfig(prev => {
                   const next = { ...prev };
                   if (checked) {
-                    const prevAlt = (prev as any)[control.altKey];
                     delete (next as any)[control.altKey];
-                    (next as any)[control.key] = typeof prevAlt === 'string' ? prevAlt : (control.rightPlaceholder || '');
+                    if ((next as any)[control.key] === undefined) {
+                      (next as any)[control.key] = control.rightPlaceholder || '';
+                    }
                   } else {
-                    const prevKey = (prev as any)[control.key];
                     delete (next as any)[control.key];
-                    (next as any)[control.altKey] = typeof prevKey === 'string' ? prevKey : (control.leftPlaceholder || '');
+                    if ((next as any)[control.altKey] === undefined) {
+                      (next as any)[control.altKey] = control.leftPlaceholder || '';
+                    }
                   }
                   return next;
                 });

@@ -69,6 +69,21 @@ export const examples: ExampleConfig[] = [
     ],
   },
   {
+    id: 'increments',
+    title: 'Range & Increments',
+    description: 'Set min/max constraints and increment steps with configurable validation timeout',
+    category: 'Validation',
+    config: { validIncrement: 5, keyIncrement: 5, incrementStart: 0 },
+    controls: [
+      { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
+      { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
+      { type: 'input', key: 'validIncrement', label: 'Valid Increment', inputType: 'number', placeholder: '0' },
+      { type: 'input', key: 'keyIncrement', label: 'Key Increment', inputType: 'number', placeholder: '1' },
+      { type: 'input', key: 'incrementStart', label: 'Increment Start', inputType: 'number', placeholder: '0' },
+      { type: 'input', key: 'validationTimeout', label: 'Timeout (ms)', inputType: 'number', placeholder: '500' },
+    ],
+  },
+  {
     id: 'currency',
     title: 'Currency',
     description: 'Formatted currency input with prefix, separators, and decimal precision',
@@ -94,21 +109,6 @@ export const examples: ExampleConfig[] = [
       { type: 'switch-label', key: 'percentage', altKey: 'percentagePrefix', leftLabel: 'Prefix', rightLabel: 'Postfix' },
       { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
       { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
-    ],
-  },
-  {
-    id: 'increments',
-    title: 'Range & Increments',
-    description: 'Set min/max constraints and increment steps with configurable validation timeout',
-    category: 'Validation',
-    config: { validIncrement: 5, keyIncrement: 5, incrementStart: 0 },
-    controls: [
-      { type: 'input', key: 'min', label: 'Min', inputType: 'number', placeholder: 'No min' },
-      { type: 'input', key: 'max', label: 'Max', inputType: 'number', placeholder: 'No max' },
-      { type: 'input', key: 'validIncrement', label: 'Valid Increment', inputType: 'number', placeholder: '0' },
-      { type: 'input', key: 'keyIncrement', label: 'Key Increment', inputType: 'number', placeholder: '1' },
-      { type: 'input', key: 'incrementStart', label: 'Increment Start', inputType: 'number', placeholder: '0' },
-      { type: 'input', key: 'validationTimeout', label: 'Timeout (ms)', inputType: 'number', placeholder: '500' },
     ],
   },
   {
