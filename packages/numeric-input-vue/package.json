@@ -8,6 +8,22 @@
     "numeric-input": "^1.0.0",
     "vue": "^3.0.0"
   },
-  "keywords": ["numeric-input", "vue", "input", "number", "formatting"],
-  "license": "MIT"
+  "keywords": [
+    "numeric-input",
+    "vue",
+    "input",
+    "number",
+    "formatting"
+  ],
+  "license": "MIT",
+  "author": "NumericInput.js Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/owner/numeric-input.git",
+    "directory": "packages/numeric-input-vue"
+  },
+  "homepage": "https://numeric-input.replit.app#vue",
+  "bugs": {
+    "url": "https://github.com/owner/numeric-input/issues"
+  }
 }

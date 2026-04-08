@@ -8,6 +8,22 @@
     "numeric-input": "^1.0.0",
     "@angular/core": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
   },
-  "keywords": ["numeric-input", "angular", "input", "number", "formatting"],
-  "license": "MIT"
+  "keywords": [
+    "numeric-input",
+    "angular",
+    "input",
+    "number",
+    "formatting"
+  ],
+  "license": "MIT",
+  "author": "NumericInput.js Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/owner/numeric-input.git",
+    "directory": "packages/numeric-input-angular"
+  },
+  "homepage": "https://numeric-input.replit.app#angular",
+  "bugs": {
+    "url": "https://github.com/owner/numeric-input/issues"
+  }
 }
