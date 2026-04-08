@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { NumericInput as NumericInputControl } from '../../../public/bindings/numeric-input-react/src/NumericInput';
+import { NumericInput as NumericInputControl } from '../../../packages/numeric-input-react/src/NumericInput';
 import type { ExampleConfig, NumericInputConfig, ExampleControl } from '@shared/schema';
 
 interface InteractiveExampleCardProps {

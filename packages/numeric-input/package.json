@@ -1,0 +1,8 @@
+{
+  "name": "numeric-input",
+  "version": "1.0.0",
+  "description": "Advanced numeric input library — framework agnostic",
+  "main": "numeric-input.js",
+  "license": "MIT",
+  "keywords": ["numeric-input", "number", "input", "formatting", "validation"]
+}
