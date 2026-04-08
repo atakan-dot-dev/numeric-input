@@ -4,12 +4,12 @@ A framework-agnostic JavaScript library for advanced numeric input handling, wit
 
 ## Packages
 
-| Package | Description | Version |
-|---------|-------------|---------|
-| [`numeric-input`](./packages/numeric-input) | Core vanilla JS library | 1.0.0 |
-| [`numeric-input-react`](./packages/numeric-input-react) | React component wrapper | 1.0.0 |
-| [`numeric-input-vue`](./packages/numeric-input-vue) | Vue 3 component wrapper | 1.0.0 |
-| [`numeric-input-angular`](./packages/numeric-input-angular) | Angular standalone component | 1.0.0 |
+| Package | Description | npm |
+|---------|-------------|-----|
+| [`numeric-input`](./packages/numeric-input) | Core vanilla JS library | [![npm](https://img.shields.io/npm/v/numeric-input.svg)](https://www.npmjs.com/package/numeric-input) |
+| [`numeric-input-react`](./packages/numeric-input-react) | React component wrapper | [![npm](https://img.shields.io/npm/v/numeric-input-react.svg)](https://www.npmjs.com/package/numeric-input-react) |
+| [`numeric-input-vue`](./packages/numeric-input-vue) | Vue 3 component wrapper | [![npm](https://img.shields.io/npm/v/numeric-input-vue.svg)](https://www.npmjs.com/package/numeric-input-vue) |
+| [`numeric-input-angular`](./packages/numeric-input-angular) | Angular standalone component | [![npm](https://img.shields.io/npm/v/numeric-input-angular.svg)](https://www.npmjs.com/package/numeric-input-angular) |
 
 ## Demo
 
