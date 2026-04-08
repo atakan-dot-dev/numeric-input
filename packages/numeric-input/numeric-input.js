@@ -27,7 +27,7 @@
         decimal: element.getAttribute('decimal') || 'locale',
         prefix: element.getAttribute('prefix') || '',
         postfix: element.getAttribute('postfix') || '',
-        locale: element.getAttribute('locale') || navigator.language,
+        locale: element.getAttribute('locale') || (typeof navigator !== 'undefined' ? navigator.language : 'en-US'),
         incrementStart: undefined,
         validationTimeout: 500,
       };

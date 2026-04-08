@@ -1,8 +1,39 @@
 {
   "name": "numeric-input",
   "version": "1.0.0",
-  "description": "Advanced numeric input library — framework agnostic",
-  "main": "numeric-input.js",
+  "description": "Framework-agnostic numeric input library with multi-base support, locale-aware formatting, smart validation, value algebra, and comprehensive keyboard handling.",
   "license": "MIT",
-  "keywords": ["numeric-input", "number", "input", "formatting", "validation"]
+  "main": "numeric-input.js",
+  "module": "numeric-input.js",
+  "exports": {
+    ".": {
+      "require": "./numeric-input.js",
+      "default": "./numeric-input.js"
+    },
+    "./numeric-input.js": "./numeric-input.js"
+  },
+  "files": [
+    "numeric-input.js",
+    "numeric-input.test.js"
+  ],
+  "scripts": {
+    "test": "node -e \"const {TestRunner} = require('./numeric-input.test.js'); TestRunner.run().then(r => { console.log('\\nPassed: ' + r.passed + '/' + r.total + ' tests'); if (r.failed) { r.tests.filter(t => t.status === 'failed').forEach(t => console.error('FAIL: ' + (t.suite ? t.suite + ' > ' : '') + t.name + ': ' + t.error)); process.exit(1); } else { console.log('All tests passed.'); } });\""
+  },
+  "keywords": [
+    "numeric-input",
+    "number",
+    "input",
+    "formatting",
+    "validation",
+    "locale",
+    "currency",
+    "value-algebra",
+    "percentage",
+    "multi-base"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/owner/numeric-input.git",
+    "directory": "packages/numeric-input"
+  }
 }
