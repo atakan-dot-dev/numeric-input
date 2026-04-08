@@ -20,11 +20,11 @@
   "author": "NumericInput.js Contributors",
   "repository": {
     "type": "git",
-    "url": "https://github.com/owner/numeric-input.git",
+    "url": "https://github.com/atakan-dot-dev/numeric-input.git",
     "directory": "packages/numeric-input-react"
   },
   "homepage": "https://numeric-input.replit.app#react",
   "bugs": {
-    "url": "https://github.com/owner/numeric-input/issues"
+    "url": "https://github.com/atakan-dot-dev/numeric-input/issues"
   }
 }

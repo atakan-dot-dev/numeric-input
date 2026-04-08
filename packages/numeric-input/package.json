@@ -33,12 +33,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/owner/numeric-input.git",
+    "url": "https://github.com/atakan-dot-dev/numeric-input.git",
     "directory": "packages/numeric-input"
   },
   "author": "NumericInput.js Contributors",
   "homepage": "https://numeric-input.replit.app",
   "bugs": {
-    "url": "https://github.com/owner/numeric-input/issues"
+    "url": "https://github.com/atakan-dot-dev/numeric-input/issues"
   }
 }
