@@ -152,7 +152,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild data-testid="link-github">
               <a
-                href="https://github.com/yourusername/numeric-input"
+                href="https://github.com/atakan-dot-dev/numeric-input"
                 target="_blank"
                 rel="noopener noreferrer"
               >
