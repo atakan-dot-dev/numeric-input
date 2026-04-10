@@ -56,7 +56,7 @@
       if (rawAccuracy !== null) {
         const accuracyVal = parseInt(rawAccuracy, 10);
         if (!isNaN(accuracyVal) && accuracyVal >= 0) {
-          if (config.validIncrement === 0) {
+          if (!element.hasAttribute('valid-increment')) {
             config.validIncrement = Math.pow(10, -accuracyVal);
           }
         } else {

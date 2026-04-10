@@ -152,9 +152,9 @@ export const advancedAttributes: AttributeDefinition[] = [
   {
     name: 'snap-origin',
     type: 'number',
-    description: 'Origin point for increment snapping. The valid-increment check uses this as the base instead of max(0, min). Useful when valid values should be offset from 0.',
+    description: 'Origin point for the increment grid. Valid values satisfy: (value − snapOrigin) % valid-increment = 0. E.g. snap-origin="3" valid-increment="5" min="0" allows 3, 8, 13, 18… instead of 0, 5, 10, 15…. Defaults to max(0, min) when not set.',
     defaultValue: 'max(0, min)',
-    example: 'snap-origin="3" valid-increment="5"',
+    example: 'snap-origin="3" valid-increment="5" min="0"',
   },
   {
     name: 'accuracy',
