@@ -22,7 +22,7 @@
     "url": "https://github.com/atakan-dot-dev/numeric-input.git",
     "directory": "packages/numeric-input-vue"
   },
-  "homepage": "https://atakan-dot-dev.github.io/numeric-input#vue",
+  "homepage": "https://atakan-dot-dev.github.io/numeric-input/#vue",
   "bugs": {
     "url": "https://github.com/atakan-dot-dev/numeric-input/issues"
   }

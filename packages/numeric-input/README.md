@@ -39,7 +39,7 @@ const NumericInput = require('numeric-input');
 </head>
 <body>
   <!-- Currency input: $0 – $10,000 in $0.01 steps -->
-  <input id="price" prefix="$" separators="," decimal="." min="0" max="10000" valid-increment="0.01" />
+  <input id="price" prefix="$" separators="," decimal-separator="." min="0" max="10000" valid-increment="0.01" />
 
   <!-- Percentage stored as a decimal (75 displayed → 0.75 stored) -->
   <input id="pct" percentage min="0" max="100" />
@@ -66,7 +66,7 @@ const NumericInput = require('numeric-input');
 | `integer` | boolean | Restrict to integers only |
 | `sign` | `any` \| `positive` \| `negative` | Allowed sign |
 | `separators` | string | Thousands separator character (or `"locale"`) |
-| `decimal` | string | Decimal separator character (or `"locale"`) |
+| `decimal-separator` | string | Decimal separator character (or `"locale"`) |
 | `locale` | string | BCP 47 locale tag for number formatting (e.g. `"de-DE"`) |
 | `base` | number | Display base: 2–36 (default `10`) |
 | `letter-case` | `upper` \| `lower` | Case for hex digits A–F |
@@ -78,7 +78,7 @@ const NumericInput = require('numeric-input');
 | `arrows` | `always` \| `focus` \| `never` | When to show increment/decrement buttons |
 | `show-plus` | boolean | Show `+` sign for positive values |
 
-Full attribute reference with live examples: **[demo app](https://atakan-dot-dev.github.io/numeric-input)**
+Full attribute reference with live examples: **[demo app](https://atakan-dot-dev.github.io/numeric-input/)**
 
 ## API
 

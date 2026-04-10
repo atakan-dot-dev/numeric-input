@@ -22,7 +22,7 @@
     "url": "https://github.com/atakan-dot-dev/numeric-input.git",
     "directory": "packages/numeric-input-angular"
   },
-  "homepage": "https://atakan-dot-dev.github.io/numeric-input#angular",
+  "homepage": "https://atakan-dot-dev.github.io/numeric-input/#angular",
   "bugs": {
     "url": "https://github.com/atakan-dot-dev/numeric-input/issues"
   }

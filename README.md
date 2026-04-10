@@ -14,7 +14,7 @@ A framework-agnostic JavaScript library for advanced numeric input handling, wit
 ## Demo
 
 Live interactive demo with full attribute documentation and a built-in test runner:
-**[numeric-input.demo.app](https://atakan-dot-dev.github.io/numeric-input)**
+**[numeric-input.demo.app](https://atakan-dot-dev.github.io/numeric-input/)**
 
 ## What is NumericInput.js?
 
