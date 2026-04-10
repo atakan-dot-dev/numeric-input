@@ -20,6 +20,7 @@ I prefer detailed explanations and thorough documentation. I appreciate clear ar
 - **Interactive Examples**: 12 configurable examples (Basic Number, Range & Increments, Currency, Percentage, Decimal Keys, Smart Paste, Number Base, Display Options, Locale & Format, Value Algebra, Precision, Full Config Playground) each with live controls that update the input behavior in real-time. Positive-only numeric controls (increment, timeout) use the React binding component to enforce the `sign="positive"` constraint.
 - **Documentation**: Comprehensive attribute reference across five categories (Validation, Formatting, Display, Locale, Advanced). Includes `value-algebra`, `percentage`, and `percentage-prefix` attributes.
 - **Integrated Test Runner**: 105 tests across 21 suites, with per-suite pass/fail badges and aggregated run status.
+- **Favicon**: Custom code-editor icon (PNG) in `client/public/favicon.png`.
 
 ### Framework Bindings (`public/bindings/`)
 - **Modular Components**: Provides dedicated components for React, Vue, and Angular, with `numeric-input` as a peer dependency.
@@ -30,6 +31,14 @@ I prefer detailed explanations and thorough documentation. I appreciate clear ar
 - **Value Algebra**: A safe recursive descent parser enables transformation of display values to stored values (e.g., `x*0.01`), supporting arithmetic, parentheses, `x` variable, and functions like `floor()`, `ceil()`, `round()`. Limited to 5 operations and 100 characters for security.
 - **Custom Arrow Buttons**: Configurable increment/decrement buttons with `always`/`never`/`focus` visibility options.
 - **Smart Paste**: Automatically detects and normalizes pasted number formats across different locales.
+
+### Attribute Naming (v0.9.0 — clean breaks, no backward compat)
+- `decimal-separator` (was `decimal`): config object key is `decimalSeparator`
+- `snap-origin` (was `increment-start`): config object key is `snapOrigin`
+- `accuracy="N"`: shorthand that sets `valid-increment` to `10^(-N)` (only when valid-increment not already set)
+- Version is `0.9.0` across all packages and the core library
+- Live demo: https://atakan-dot-dev.github.io/numeric-input/
+- GitHub repo: https://github.com/atakan-dot-dev/numeric-input
 
 ## External Dependencies
 - **Intl API**: Utilized for locale-aware number formatting.
