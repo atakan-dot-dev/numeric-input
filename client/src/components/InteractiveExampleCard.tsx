@@ -19,7 +19,8 @@ function configToHtml(config: Partial<NumericInputConfig>): string {
   const keyMap: Record<string, string> = {
     validIncrement: 'valid-increment',
     keyIncrement: 'key-increment',
-    incrementStart: 'increment-start',
+    snapOrigin: 'snap-origin',
+    decimalSeparator: 'decimal-separator',
     letterCase: 'letter-case',
     showPlus: 'show-plus',
     valueAlgebra: 'value-algebra',
@@ -33,7 +34,7 @@ function configToHtml(config: Partial<NumericInputConfig>): string {
     if (value === undefined || value === null || value === '') continue;
     if (key === 'sign' && value === 'any') continue;
     if (key === 'separators' && value === 'locale') continue;
-    if (key === 'decimal' && value === 'locale') continue;
+    if (key === 'decimalSeparator' && value === 'locale') continue;
     if (key === 'base' && value === 10) continue;
     if (key === 'letterCase' && value === 'upper') continue;
     if (key === 'arrows' && value === 'always') continue;
@@ -87,10 +88,11 @@ export function InteractiveExampleCard({ example, scriptLoaded = false }: Intera
     if (!input || !scriptLoaded || !(window as any).NumericInput) return;
 
     const allPossibleAttrs = [
-      'prefix', 'postfix', 'separators', 'decimal', 'min', 'max',
+      'prefix', 'postfix', 'separators', 'decimal-separator', 'min', 'max',
       'valid-increment', 'key-increment', 'base', 'radix', 'letter-case',
-      'sign', 'locale', 'integer', 'show-plus', 'increment-start',
-      'validation-timeout', 'value-algebra', 'percentage', 'percentage-prefix', 'arrows'
+      'sign', 'locale', 'integer', 'show-plus', 'snap-origin', 'accuracy',
+      'validation-timeout', 'value-algebra', 'percentage', 'percentage-prefix', 'arrows',
+      'decimal-keys',
     ];
 
     if (attachedRef.current) {

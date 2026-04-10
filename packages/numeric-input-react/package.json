@@ -1,6 +1,6 @@
 {
   "name": "numeric-input-react",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "React component for NumericInput.js - Advanced numeric input handling",
   "main": "src/NumericInput.tsx",
   "types": "src/NumericInput.tsx",
@@ -23,7 +23,7 @@
     "url": "https://github.com/atakan-dot-dev/numeric-input.git",
     "directory": "packages/numeric-input-react"
   },
-  "homepage": "https://numeric-input.replit.app#react",
+  "homepage": "https://atakan-dot-dev.github.io/numeric-input#react",
   "bugs": {
     "url": "https://github.com/atakan-dot-dev/numeric-input/issues"
   }

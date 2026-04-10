@@ -75,11 +75,11 @@ export const formattingAttributes: AttributeDefinition[] = [
     example: 'separators=","',
   },
   {
-    name: 'decimal',
+    name: 'decimal-separator',
     type: 'string',
     description: 'Character for decimal separator. Use "locale" to determine based on locale, or specify a custom character.',
     defaultValue: 'locale',
-    example: 'decimal="."',
+    example: 'decimal-separator="."',
   },
 ];
 
@@ -150,11 +150,18 @@ export const advancedAttributes: AttributeDefinition[] = [
     example: 'percentage-prefix',
   },
   {
-    name: 'increment-start',
+    name: 'snap-origin',
     type: 'number',
-    description: 'Base value for increment validation. The valid-increment check uses this as the origin point instead of max(0, min). Useful when valid values should be offset from 0.',
+    description: 'Origin point for increment snapping. The valid-increment check uses this as the base instead of max(0, min). Useful when valid values should be offset from 0.',
     defaultValue: 'max(0, min)',
-    example: 'increment-start="3" valid-increment="5"',
+    example: 'snap-origin="3" valid-increment="5"',
+  },
+  {
+    name: 'accuracy',
+    type: 'number',
+    description: 'Shorthand for setting valid-increment to a decimal precision. accuracy="2" sets valid-increment="0.01", accuracy="0" sets valid-increment="1". Only applied when valid-increment is not already set.',
+    defaultValue: 'none',
+    example: 'accuracy="2"',
   },
   {
     name: 'validation-timeout',

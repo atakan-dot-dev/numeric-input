@@ -19,11 +19,11 @@ export interface NumericInputProps
   base?: number;
   letterCase?: 'upper' | 'lower';
   separators?: string;
-  decimal?: string;
+  decimalSeparator?: string;
   locale?: string;
   validIncrement?: number;
   keyIncrement?: number;
-  incrementStart?: number;
+  snapOrigin?: number;
   validationTimeout?: number;
   valueAlgebra?: string;
   percentage?: boolean;
@@ -36,7 +36,8 @@ const ATTR_MAP: Record<string, string> = {
   letterCase: 'letter-case',
   validIncrement: 'valid-increment',
   keyIncrement: 'key-increment',
-  incrementStart: 'increment-start',
+  snapOrigin: 'snap-origin',
+  decimalSeparator: 'decimal-separator',
   validationTimeout: 'validation-timeout',
   valueAlgebra: 'value-algebra',
   percentagePrefix: 'percentage-prefix',
@@ -44,8 +45,8 @@ const ATTR_MAP: Record<string, string> = {
 
 const CONFIG_KEYS = [
   'prefix', 'postfix', 'integer', 'sign', 'showPlus', 'base',
-  'letterCase', 'separators', 'decimal', 'locale', 'validIncrement',
-  'keyIncrement', 'incrementStart', 'validationTimeout', 'valueAlgebra',
+  'letterCase', 'separators', 'decimalSeparator', 'locale', 'validIncrement',
+  'keyIncrement', 'snapOrigin', 'validationTimeout', 'valueAlgebra',
   'percentage', 'percentagePrefix',
 ] as const;
 
@@ -53,8 +54,8 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
   (props, ref) => {
     const {
       prefix, postfix, integer, sign, showPlus, base, letterCase,
-      separators, decimal, locale, validIncrement, keyIncrement,
-      incrementStart, validationTimeout, valueAlgebra, percentage,
+      separators, decimalSeparator, locale, validIncrement, keyIncrement,
+      snapOrigin, validationTimeout, valueAlgebra, percentage,
       percentagePrefix, onStoredValueChange, ...inputProps
     } = props;
 
@@ -65,8 +66,8 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
 
     const configValues = {
       prefix, postfix, integer, sign, showPlus, base, letterCase,
-      separators, decimal, locale, validIncrement, keyIncrement,
-      incrementStart, validationTimeout, valueAlgebra, percentage,
+      separators, decimalSeparator, locale, validIncrement, keyIncrement,
+      snapOrigin, validationTimeout, valueAlgebra, percentage,
       percentagePrefix,
     };
 
@@ -125,8 +126,8 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
       };
     }, [
       prefix, postfix, integer, sign, showPlus, base, letterCase,
-      separators, decimal, locale, validIncrement, keyIncrement,
-      incrementStart, validationTimeout, valueAlgebra, percentage,
+      separators, decimalSeparator, locale, validIncrement, keyIncrement,
+      snapOrigin, validationTimeout, valueAlgebra, percentage,
       percentagePrefix,
     ]);
 

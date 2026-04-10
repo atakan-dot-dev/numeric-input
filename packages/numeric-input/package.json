@@ -1,6 +1,6 @@
 {
   "name": "numeric-input",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "Framework-agnostic numeric input library with multi-base support, locale-aware formatting, smart validation, value algebra, and comprehensive keyboard handling.",
   "license": "MIT",
   "main": "numeric-input.js",
@@ -37,7 +37,7 @@
     "directory": "packages/numeric-input"
   },
   "author": "NumericInput.js Contributors",
-  "homepage": "https://numeric-input.replit.app",
+  "homepage": "https://atakan-dot-dev.github.io/numeric-input",
   "bugs": {
     "url": "https://github.com/atakan-dot-dev/numeric-input/issues"
   }

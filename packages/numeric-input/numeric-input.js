@@ -1,13 +1,13 @@
 /**
  * NumericInput.js - Advanced Numeric Input Library
- * Version 1.0.0
+ * Version 0.9.0
  * A framework-agnostic library for enhanced numeric input handling
  */
 (function(global) {
   'use strict';
 
   const NumericInput = {
-    version: '1.0.0',
+    version: '0.9.0',
     _attached: new WeakMap(),
 
     parseConfig(element) {
@@ -24,11 +24,11 @@
         radix: parseInt(element.getAttribute('radix')),
         letterCase: element.getAttribute('letter-case') || 'upper',
         separators: element.getAttribute('separators') || 'locale',
-        decimal: element.getAttribute('decimal') || 'locale',
+        decimalSeparator: element.getAttribute('decimal-separator') || 'locale',
         prefix: element.getAttribute('prefix') || '',
         postfix: element.getAttribute('postfix') || '',
         locale: element.getAttribute('locale') || (typeof navigator !== 'undefined' ? navigator.language : 'en-US'),
-        incrementStart: undefined,
+        snapOrigin: undefined,
         validationTimeout: 500,
       };
 
@@ -68,11 +68,23 @@
         config.keyIncrement = config.validIncrement || 1;
       }
 
-      const rawIncrementStart = element.getAttribute('increment-start');
-      if (rawIncrementStart !== null) {
-        config.incrementStart = parseFloat(rawIncrementStart);
+      const rawSnapOrigin = element.getAttribute('snap-origin');
+      if (rawSnapOrigin !== null) {
+        config.snapOrigin = parseFloat(rawSnapOrigin);
       } else {
-        config.incrementStart = Math.max(0, config.min ?? 0);
+        config.snapOrigin = Math.max(0, config.min ?? 0);
+      }
+
+      const rawAccuracy = element.getAttribute('accuracy');
+      if (rawAccuracy !== null) {
+        const accuracyVal = parseInt(rawAccuracy, 10);
+        if (!isNaN(accuracyVal) && accuracyVal >= 0) {
+          if (config.validIncrement === 0) {
+            config.validIncrement = Math.pow(10, -accuracyVal);
+          }
+        } else {
+          console.warn(`Invalid accuracy value: "${rawAccuracy}". Must be a non-negative integer.`);
+        }
       }
 
       const rawAlgebra = element.getAttribute('value-algebra');
@@ -449,9 +461,9 @@
         ? this.getGroupSeparator(config.locale)
         : (config.separators === 'indian' ? ',' : config.separators);
 
-      const decSep = config.decimal === 'locale'
+      const decSep = config.decimalSeparator === 'locale'
         ? this.getDecimalSeparator(config.locale)
-        : config.decimal;
+        : config.decimalSeparator;
       
       if (separator && separator !== decSep) {
         cleaned = cleaned.split(separator).join('');
@@ -501,7 +513,7 @@
       }
 
       if (config.validIncrement !== 0) {
-        const base = config.incrementStart !== undefined ? config.incrementStart : (config.min ?? 0);
+        const base = config.snapOrigin !== undefined ? config.snapOrigin : (config.min ?? 0);
         const offset = numValue - base;
         const remainder = offset % config.validIncrement;
         if (Math.abs(remainder) > 1e-10 && Math.abs(remainder - config.validIncrement) > 1e-10) {
@@ -553,7 +565,7 @@
         return false;
       }
 
-      const base = config.incrementStart !== undefined ? config.incrementStart : (config.min ?? 0);
+      const base = config.snapOrigin !== undefined ? config.snapOrigin : (config.min ?? 0);
       const offset = numValue - base;
       const remainder = offset % config.validIncrement;
       if (Math.abs(remainder) > 1e-10 && Math.abs(remainder - config.validIncrement) > 1e-10) {
@@ -569,7 +581,7 @@
       const numValue = typeof value === 'string' ? parseFloat(value) : value;
       if (isNaN(numValue)) return value;
 
-      const base = config.incrementStart !== undefined ? config.incrementStart : (config.min ?? 0);
+      const base = config.snapOrigin !== undefined ? config.snapOrigin : (config.min ?? 0);
       const offset = numValue - base;
       const snapped = base + Math.round(offset / config.validIncrement) * config.validIncrement;
 
@@ -611,10 +623,10 @@
     },
 
     getActiveDecimalSep(config) {
-      if (config.decimal === 'locale') {
+      if (config.decimalSeparator === 'locale') {
         return this.getDecimalSeparator(config.locale);
       }
-      return config.decimal;
+      return config.decimalSeparator;
     },
 
     handleKeyDown(event, originalInput, displayInput, config) {

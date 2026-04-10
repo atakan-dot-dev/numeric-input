@@ -25,7 +25,8 @@ const ATTR_MAP: Record<string, string> = {
   letterCase: 'letter-case',
   validIncrement: 'valid-increment',
   keyIncrement: 'key-increment',
-  incrementStart: 'increment-start',
+  snapOrigin: 'snap-origin',
+  decimalSeparator: 'decimal-separator',
   validationTimeout: 'validation-timeout',
   valueAlgebra: 'value-algebra',
   percentagePrefix: 'percentage-prefix',
@@ -60,13 +61,13 @@ export class NumericInputComponent implements AfterViewInit, OnDestroy, OnChange
   @Input() base?: number;
   @Input() letterCase?: 'upper' | 'lower';
   @Input() separators?: string;
-  @Input() decimal?: string;
+  @Input() decimalSeparator?: string;
   @Input() locale?: string;
   @Input() min?: number;
   @Input() max?: number;
   @Input() validIncrement?: number;
   @Input() keyIncrement?: number;
-  @Input() incrementStart?: number;
+  @Input() snapOrigin?: number;
   @Input() validationTimeout?: number;
   @Input() valueAlgebra?: string;
   @Input() percentage?: boolean;
@@ -108,8 +109,8 @@ export class NumericInputComponent implements AfterViewInit, OnDestroy, OnChange
 
     const configKeys = [
       'prefix', 'postfix', 'integer', 'sign', 'showPlus', 'base',
-      'letterCase', 'separators', 'decimal', 'locale', 'min', 'max',
-      'validIncrement', 'keyIncrement', 'incrementStart', 'validationTimeout',
+      'letterCase', 'separators', 'decimalSeparator', 'locale', 'min', 'max',
+      'validIncrement', 'keyIncrement', 'snapOrigin', 'validationTimeout',
       'valueAlgebra', 'percentage', 'percentagePrefix',
     ];
 

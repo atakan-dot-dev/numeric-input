@@ -78,7 +78,7 @@ const NumericInput = require('numeric-input');
 | `arrows` | `always` \| `focus` \| `never` | When to show increment/decrement buttons |
 | `show-plus` | boolean | Show `+` sign for positive values |
 
-Full attribute reference with live examples: **[demo app](https://numeric-input.replit.app)**
+Full attribute reference with live examples: **[demo app](https://atakan-dot-dev.github.io/numeric-input)**
 
 ## API
 
