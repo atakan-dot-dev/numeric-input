@@ -24,7 +24,7 @@ export function loadNumericInputScript(): Promise<void> {
 
   scriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = '/numeric-input.js';
+    script.src = import.meta.env.BASE_URL + 'numeric-input.js';
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error('Failed to load NumericInput script'));

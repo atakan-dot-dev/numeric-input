@@ -63,7 +63,7 @@ export function useTestRunner() {
 
       // Load test script for the first time
       const script = document.createElement('script');
-      script.src = '/numeric-input.test.js';
+      script.src = import.meta.env.BASE_URL + 'numeric-input.test.js';
       script.onload = async () => {
         // Wait a bit for the script to initialize
         await new Promise(r => setTimeout(r, 100));
