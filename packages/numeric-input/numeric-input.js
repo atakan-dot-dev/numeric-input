@@ -52,6 +52,18 @@
         config.base = 10;
       }
 
+      const rawAccuracy = element.getAttribute('accuracy');
+      if (rawAccuracy !== null) {
+        const accuracyVal = parseInt(rawAccuracy, 10);
+        if (!isNaN(accuracyVal) && accuracyVal >= 0) {
+          if (config.validIncrement === 0) {
+            config.validIncrement = Math.pow(10, -accuracyVal);
+          }
+        } else {
+          console.warn(`Invalid accuracy value: "${rawAccuracy}". Must be a non-negative integer.`);
+        }
+      }
+
       if (config.integer && config.validIncrement === 0) {
         config.validIncrement = 1;
       } else if (config.integer && config.validIncrement < 1) {
@@ -73,18 +85,6 @@
         config.snapOrigin = parseFloat(rawSnapOrigin);
       } else {
         config.snapOrigin = Math.max(0, config.min ?? 0);
-      }
-
-      const rawAccuracy = element.getAttribute('accuracy');
-      if (rawAccuracy !== null) {
-        const accuracyVal = parseInt(rawAccuracy, 10);
-        if (!isNaN(accuracyVal) && accuracyVal >= 0) {
-          if (config.validIncrement === 0) {
-            config.validIncrement = Math.pow(10, -accuracyVal);
-          }
-        } else {
-          console.warn(`Invalid accuracy value: "${rawAccuracy}". Must be a non-negative integer.`);
-        }
       }
 
       const rawAlgebra = element.getAttribute('value-algebra');

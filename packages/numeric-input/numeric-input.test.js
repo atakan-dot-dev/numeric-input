@@ -179,7 +179,7 @@ TestRunner.suite('Validation Tests', () => {
   TestRunner.test('Valid increment enforcement', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
       'valid-increment': '5',
-      'increment-start': '0'
+      'snap-origin': '0'
     }));
     assert(NumericInput.isValidValue(0, config), 'Value 0 should be valid');
     assert(NumericInput.isValidValue(5, config), 'Value 5 should be valid');
@@ -268,7 +268,7 @@ TestRunner.suite('Formatting Tests', () => {
   });
 
   TestRunner.test('Decimal character', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': ',' }));
     const formatted = NumericInput.formatValue(1.5, config);
     assert(formatted.includes(','), 'Should use custom decimal separator');
   });
@@ -567,7 +567,7 @@ TestRunner.suite('Paste Filtering Tests', () => {
   });
 
   TestRunner.test('Paste preserves decimal point', () => {
-    const originalInput = createMockInput({ decimal: '.' });
+    const originalInput = createMockInput({ 'decimal-separator': '.' });
     const displayInput = createMockInput({});
     const config = NumericInput.parseConfig(originalInput);
     displayInput.value = '';
@@ -628,7 +628,7 @@ TestRunner.suite('Floating Point Precision Tests', () => {
   TestRunner.test('Valid increment check handles floating point', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
       'valid-increment': '0.01',
-      'increment-start': '0'
+      'snap-origin': '0'
     }));
     assert(NumericInput.isValidValue(0.01, config), '0.01 should be valid');
     assert(NumericInput.isValidValue(0.02, config), '0.02 should be valid');
@@ -657,37 +657,37 @@ TestRunner.suite('Floating Point Precision Tests', () => {
 });
 
 // ============================================================================
-// INCREMENT START TESTS
+// SNAP ORIGIN TESTS
 // ============================================================================
 
-TestRunner.suite('Increment Start Tests', () => {
-  TestRunner.test('increment-start defaults to max(0, min)', () => {
+TestRunner.suite('Snap Origin Tests', () => {
+  TestRunner.test('snap-origin defaults to max(0, min)', () => {
     const config1 = NumericInput.parseConfig(createMockInput({ min: '5' }));
-    assertEqual(config1.incrementStart, 5, 'Should default to min when min > 0');
+    assertEqual(config1.snapOrigin, 5, 'Should default to min when min > 0');
     
     const config2 = NumericInput.parseConfig(createMockInput({ min: '-10' }));
-    assertEqual(config2.incrementStart, 0, 'Should default to 0 when min < 0');
+    assertEqual(config2.snapOrigin, 0, 'Should default to 0 when min < 0');
     
     const config3 = NumericInput.parseConfig(createMockInput({}));
-    assertEqual(config3.incrementStart, 0, 'Should default to 0 when no min');
+    assertEqual(config3.snapOrigin, 0, 'Should default to 0 when no min');
   });
 
-  TestRunner.test('increment-start can be explicitly set', () => {
+  TestRunner.test('snap-origin can be explicitly set', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
-      'increment-start': '3',
+      'snap-origin': '3',
       'valid-increment': '5'
     }));
-    assertEqual(config.incrementStart, 3, 'Should use explicit increment-start');
+    assertEqual(config.snapOrigin, 3, 'Should use explicit snap-origin');
     assert(NumericInput.isValidValue(3, config), '3 should be valid (start)');
     assert(NumericInput.isValidValue(8, config), '8 should be valid (3+5)');
     assert(NumericInput.isValidValue(13, config), '13 should be valid (3+10)');
     assert(!NumericInput.isValidValue(5, config), '5 should be invalid');
   });
 
-  TestRunner.test('Increment validation uses incrementStart not min', () => {
+  TestRunner.test('Increment validation uses snapOrigin not min', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
       'valid-increment': '5',
-      'increment-start': '0',
+      'snap-origin': '0',
       min: '-100'
     }));
     assert(NumericInput.isValidValue(0, config), '0 should be valid');
@@ -812,7 +812,7 @@ TestRunner.suite('Range Constraint Tests', () => {
 
 TestRunner.suite('European Format Tests', () => {
   TestRunner.test('European format increments with arrow keys', () => {
-    const originalInput = createMockInput({ decimal: ',', separators: '.', locale: 'de-DE' });
+    const originalInput = createMockInput({ 'decimal-separator': ',', separators: '.', locale: 'de-DE' });
     const displayInput = createMockInput({});
     const config = NumericInput.parseConfig(originalInput);
     displayInput.value = '5';
@@ -823,13 +823,13 @@ TestRunner.suite('European Format Tests', () => {
   });
 
   TestRunner.test('European format parses comma decimal', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: ',', separators: '.', locale: 'de-DE' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': ',', separators: '.', locale: 'de-DE' }));
     const parsed = NumericInput.parseValue('1,5', config);
     assertEqual(parsed, 1.5, 'Should parse comma as decimal separator');
   });
 
   TestRunner.test('European format formats with comma decimal', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: ',', separators: '.', locale: 'de-DE' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': ',', separators: '.', locale: 'de-DE' }));
     const formatted = NumericInput.formatValue(1.5, config);
     assert(formatted.includes(','), 'Should use comma as decimal separator');
     assert(!formatted.includes('.'), 'Should not use dot as decimal separator');
@@ -883,7 +883,7 @@ TestRunner.suite('Validation Timeout Tests', () => {
   TestRunner.test('snapToIncrement rounds to nearest valid value', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
       'valid-increment': '5',
-      'increment-start': '0'
+      'snap-origin': '0'
     }));
     assertEqual(NumericInput.snapToIncrement(12, config), 10, '12 should snap to 10');
     assertEqual(NumericInput.snapToIncrement(13, config), 15, '13 should snap to 15');
@@ -894,7 +894,7 @@ TestRunner.suite('Validation Timeout Tests', () => {
   TestRunner.test('isValidRange checks sign/min/max but not increment', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
       'valid-increment': '5',
-      'increment-start': '0',
+      'snap-origin': '0',
       min: '0',
       max: '100'
     }));
@@ -908,7 +908,7 @@ TestRunner.suite('Validation Timeout Tests', () => {
   TestRunner.test('isValidIncrement checks only increment constraint', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
       'valid-increment': '5',
-      'increment-start': '0'
+      'snap-origin': '0'
     }));
     assert(NumericInput.isValidIncrement(10, config), '10 should be valid increment');
     assert(NumericInput.isValidIncrement(15, config), '15 should be valid increment');
@@ -929,7 +929,7 @@ TestRunner.suite('Validation Timeout Tests', () => {
   TestRunner.test('snapToIncrement respects min/max bounds', () => {
     const config = NumericInput.parseConfig(createMockInput({ 
       'valid-increment': '10',
-      'increment-start': '0',
+      'snap-origin': '0',
       min: '5',
       max: '95'
     }));
@@ -1112,14 +1112,14 @@ TestRunner.suite('Decimal Keys Tests', () => {
   });
 
   TestRunner.test('both mode: period produces configured comma decimal', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': ',' }));
     assertEqual(config.decimalKeys, 'both', 'Should be both mode');
     const decSep = NumericInput.getActiveDecimalSep(config);
     assertEqual(decSep, ',', 'Active decimal should be comma');
   });
 
   TestRunner.test('configured mode: only configured key allowed', () => {
-    const config = NumericInput.parseConfig(createMockInput({ 'decimal-keys': 'configured', decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-keys': 'configured', 'decimal-separator': '.' }));
     assertEqual(config.decimalKeys, 'configured', 'Should be configured mode');
     const decSep = NumericInput.getActiveDecimalSep(config);
     assertEqual(decSep, '.', 'Active decimal should be period');
@@ -1128,73 +1128,73 @@ TestRunner.suite('Decimal Keys Tests', () => {
 
 TestRunner.suite('Smart Paste Tests', () => {
   TestRunner.test('continental European into US box: 100.000,25 → 100000.25', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('100.000,25', config);
     assertEqual(result, '100000.25', 'Should detect continental format and convert');
   });
 
   TestRunner.test('US format into European box: 100,000.25 → 100000,25', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': ',' }));
     const result = NumericInput._smartPasteNormalize('100,000.25', config);
     assertEqual(result, '100000,25', 'Should detect US format and convert');
   });
 
   TestRunner.test('repeated dots stripped: 1.000.000 → 1000000', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('1.000.000', config);
     assertEqual(result, '1000000', 'Multiple dots should be stripped as thousands separators');
   });
 
   TestRunner.test('repeated commas stripped: 1,000,000 → 1000000', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('1,000,000', config);
     assertEqual(result, '1000000', 'Multiple commas should be stripped as thousands separators');
   });
 
   TestRunner.test('ambiguous 3 digits: 1.000 with US config → 1.000 (decimal)', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('1.000', config);
     assertEqual(result, '1.000', 'Ambiguous with US config should keep as decimal');
   });
 
   TestRunner.test('ambiguous 3 digits: 1.000 with EU config → 1000 (thousands)', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': ',' }));
     const result = NumericInput._smartPasteNormalize('1.000', config);
     assertEqual(result, '1000', 'Ambiguous with EU config should strip as thousands');
   });
 
   TestRunner.test('ambiguous 3 digits: 1,000 with EU config → 1,000 (decimal)', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: ',' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': ',' }));
     const result = NumericInput._smartPasteNormalize('1,000', config);
     assertEqual(result, '1,000', 'Ambiguous comma with EU config should keep as decimal');
   });
 
   TestRunner.test('ambiguous 3 digits: 1,000 with US config → 1000 (thousands)', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('1,000', config);
     assertEqual(result, '1000', 'Ambiguous comma with US config should strip as thousands');
   });
 
   TestRunner.test('single separator with 2 digits after is decimal: 3.14 → 3.14', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('3.14', config);
     assertEqual(result, '3.14', 'Should treat as decimal');
   });
 
   TestRunner.test('negative number preserved: -100.000,25 → -100000.25', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('-100.000,25', config);
     assertEqual(result, '-100000.25', 'Should preserve negative sign');
   });
 
   TestRunner.test('plain integer passes through: 12345 → 12345', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('12345', config);
     assertEqual(result, '12345', 'Plain integer should pass through');
   });
 
   TestRunner.test('currency symbols stripped: $1,234.56 → 1234.56', () => {
-    const config = NumericInput.parseConfig(createMockInput({ decimal: '.' }));
+    const config = NumericInput.parseConfig(createMockInput({ 'decimal-separator': '.' }));
     const result = NumericInput._smartPasteNormalize('$1,234.56', config);
     assertEqual(result, '1234.56', 'Should strip $ and handle US format');
   });

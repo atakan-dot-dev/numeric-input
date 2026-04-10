@@ -4,9 +4,9 @@ export const validationAttributes: AttributeDefinition[] = [
   {
     name: 'valid-increment',
     type: 'number',
-    description: 'Restricts valid values to increments from min. Value must satisfy: value = min + x * increment (where x is a positive integer). Defaults to 0, which allows all numbers.',
+    description: 'Restricts valid values to multiples of this increment offset from snap-origin (defaults to max(0, min)). Value must satisfy: (value − snapOrigin) % increment = 0. Defaults to 0, which allows all values. See accuracy for a shorthand.',
     defaultValue: 0,
-    example: 'valid-increment="5" min="0"',
+    example: 'valid-increment="0.25" min="0"',
   },
   {
     name: 'key-increment',

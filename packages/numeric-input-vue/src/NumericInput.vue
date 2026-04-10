@@ -21,13 +21,13 @@ export interface NumericInputProps {
   base?: number;
   letterCase?: 'upper' | 'lower';
   separators?: string;
-  decimal?: string;
+  decimalSeparator?: string;
   locale?: string;
   min?: number;
   max?: number;
   validIncrement?: number;
   keyIncrement?: number;
-  incrementStart?: number;
+  snapOrigin?: number;
   validationTimeout?: number;
   valueAlgebra?: string;
   percentage?: boolean;
@@ -47,9 +47,10 @@ let currentHandler: (() => void) | null = null;
 const ATTR_MAP: Record<string, string> = {
   showPlus: 'show-plus',
   letterCase: 'letter-case',
+  decimalSeparator: 'decimal-separator',
   validIncrement: 'valid-increment',
   keyIncrement: 'key-increment',
-  incrementStart: 'increment-start',
+  snapOrigin: 'snap-origin',
   validationTimeout: 'validation-timeout',
   valueAlgebra: 'value-algebra',
   percentagePrefix: 'percentage-prefix',
@@ -57,8 +58,8 @@ const ATTR_MAP: Record<string, string> = {
 
 const CONFIG_KEYS = [
   'prefix', 'postfix', 'integer', 'sign', 'showPlus', 'base',
-  'letterCase', 'separators', 'decimal', 'locale', 'min', 'max',
-  'validIncrement', 'keyIncrement', 'incrementStart', 'validationTimeout',
+  'letterCase', 'separators', 'decimalSeparator', 'locale', 'min', 'max',
+  'validIncrement', 'keyIncrement', 'snapOrigin', 'validationTimeout',
   'valueAlgebra', 'percentage', 'percentagePrefix',
 ] as const;
 
@@ -118,8 +119,8 @@ onMounted(() => applyConfig());
 watch(() => [
   props.prefix, props.postfix, props.integer, props.sign,
   props.showPlus, props.base, props.letterCase, props.separators,
-  props.decimal, props.locale, props.min, props.max,
-  props.validIncrement, props.keyIncrement, props.incrementStart,
+  props.decimalSeparator, props.locale, props.min, props.max,
+  props.validIncrement, props.keyIncrement, props.snapOrigin,
   props.validationTimeout, props.valueAlgebra, props.percentage,
   props.percentagePrefix,
 ], () => applyConfig());
